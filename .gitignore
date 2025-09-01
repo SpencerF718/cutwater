@@ -5,6 +5,7 @@
 /Makefile
 /compile_commands.json
 /*.cmake
+.cache/
 
 # Prerequisites
 *.d
