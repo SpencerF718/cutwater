@@ -2,12 +2,27 @@
 #include "cutwater.h"
 #include "file_io.h"
 
+void update_window_title(CutwaterApp *app) {
+    const char *filename = app->current_file ? app->current_file : "Untitled";
+    char *title = g_strdup_printf("%s%s - Cutwater",
+                                  filename,
+                                  app->modified ? "*" : "");
+    gtk_window_set_title(GTK_WINDOW(app->window), title);
+    g_free(title);
+}
+
 static void on_buffer_changed(GtkTextBuffer *buffer, gpointer user_data) {
     CutwaterApp *app = user_data;
     if (!app->modified) {
         app->modified = TRUE;
-        gtk_window_set_title(GTK_WINDOW(app->window), "Cutwater*");
+        update_window_title(app);
     }
+}
+
+static void cutwater_app_free(CutwaterApp *app) {
+    if (!app) return;
+    g_free(app->current_file);
+    g_free(app);
 }
 
 static void activate(GtkApplication *gapp, gpointer user_data) {
@@ -18,7 +33,6 @@ static void activate(GtkApplication *gapp, gpointer user_data) {
     GtkWidget *text_view;
 
     window = gtk_application_window_new(gapp);
-    gtk_window_set_title(GTK_WINDOW(window), "Cutwater");
     gtk_window_set_default_size(GTK_WINDOW(window), 600, 500);
 
     scrolled_window = gtk_scrolled_window_new();
@@ -40,7 +54,11 @@ static void activate(GtkApplication *gapp, gpointer user_data) {
     g_signal_connect(app->buffer, "changed", G_CALLBACK(on_buffer_changed), app);
 
     GtkCssProvider *provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_path(provider, "../assets/cutwater.css");
+    GFile *css_file = g_file_new_for_path("../assets/cutwater.css");
+
+    gtk_css_provider_load_from_file(provider, css_file);
+    g_object_unref(css_file);
+
     gtk_style_context_add_provider_for_display(
         gdk_display_get_default(),
         GTK_STYLE_PROVIDER(provider),
@@ -60,7 +78,11 @@ static void activate(GtkApplication *gapp, gpointer user_data) {
         },
         2, app);
 
+    update_window_title(app);
     gtk_window_present(GTK_WINDOW(window));
+
+    g_object_set_data_full(G_OBJECT(gapp), "cutwater-app", app,
+                           (GDestroyNotify)cutwater_app_free);
 }
 
 int main(int argc, char **argv) {

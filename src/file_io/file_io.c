@@ -4,38 +4,54 @@
 static void open_file_response(GObject *source, GAsyncResult *res, gpointer user_data) {
     CutwaterApp *app = user_data;
     GtkFileDialog *dialog = GTK_FILE_DIALOG(source);
-    GFile *file = gtk_file_dialog_open_finish(dialog, res, NULL);
+    GError *error = NULL;
+    GFile *file = gtk_file_dialog_open_finish(dialog, res, &error);
 
-    if (file) {
-        char *contents;
-        gsize length;
-        if (g_file_load_contents(file, NULL, &contents, &length, NULL, NULL)) {
-            gtk_text_buffer_set_text(app->buffer, contents, length);
-            g_free(contents);
-
-            if (app->current_file) g_free(app->current_file);
-            app->current_file = g_file_get_path(file);
-            gtk_window_set_title(GTK_WINDOW(app->window), app->current_file);
-
-            app->modified = FALSE;
+    if (!file) {
+        if (error) {
+            g_warning("Open file failed: %s", error->message);
+            g_error_free(error);
         }
-        g_object_unref(file);
+        return;
     }
+
+    char *contents;
+    gsize length;
+    if (g_file_load_contents(file, NULL, &contents, &length, NULL, &error)) {
+        gtk_text_buffer_set_text(app->buffer, contents, length);
+        g_free(contents);
+
+        g_free(app->current_file);
+        app->current_file = g_file_get_path(file);
+        app->modified = FALSE;
+        update_window_title(app);
+    } else {
+        g_warning("Failed to load file: %s", error->message);
+        g_error_free(error);
+    }
+
+    g_object_unref(file);
 }
 
 static void save_file_response(GObject *source, GAsyncResult *res, gpointer user_data) {
     CutwaterApp *app = user_data;
     GtkFileDialog *dialog = GTK_FILE_DIALOG(source);
-    GFile *file = gtk_file_dialog_save_finish(dialog, res, NULL);
+    GError *error = NULL;
+    GFile *file = gtk_file_dialog_save_finish(dialog, res, &error);
 
-    if (file) {
-        if (app->current_file) g_free(app->current_file);
-        app->current_file = g_file_get_path(file);
-        g_object_unref(file);
-
-        gtk_window_set_title(GTK_WINDOW(app->window), app->current_file);
-        save_file(app);
+    if (!file) {
+        if (error) {
+            g_warning("Save file dialog failed: %s", error->message);
+            g_error_free(error);
+        }
+        return;
     }
+
+    g_free(app->current_file);
+    app->current_file = g_file_get_path(file);
+    g_object_unref(file);
+
+    save_file(app);
 }
 
 void save_file(CutwaterApp *app) {
@@ -51,16 +67,15 @@ void save_file(CutwaterApp *app) {
     char *text = gtk_text_buffer_get_text(app->buffer, &start, &end, FALSE);
 
     GError *error = NULL;
-    g_file_set_contents(app->current_file, text, -1, &error);
-    g_free(text);
-
-    if (error) {
+    if (!g_file_set_contents(app->current_file, text, -1, &error)) {
         g_warning("Failed to save: %s", error->message);
         g_error_free(error);
     } else {
         app->modified = FALSE;
-        gtk_window_set_title(GTK_WINDOW(app->window), app->current_file);
     }
+    g_free(text);
+
+    update_window_title(app);
 }
 
 void open_file_action(GSimpleAction *action, GVariant *parameter, gpointer user_data) {

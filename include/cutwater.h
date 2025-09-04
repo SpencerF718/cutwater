@@ -11,5 +11,7 @@ typedef struct {
     gboolean modified;
 } CutwaterApp;
 
+void update_window_title(CutwaterApp *app);
+
 #endif
 
