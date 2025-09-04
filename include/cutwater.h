@@ -4,11 +4,11 @@
 #include <gtk/gtk.h>
 
 typedef struct {
-    GtkWidget *window;
-    GtkWidget *text_view;
-    GtkTextBuffer *buffer;
-    char *current_file;
-    gboolean modified;
+  GtkWidget *window;
+  GtkWidget *text_view;
+  GtkTextBuffer *buffer;
+  char *current_file;
+  gboolean modified;
 } CutwaterApp;
 
 void update_window_title(CutwaterApp *app);
