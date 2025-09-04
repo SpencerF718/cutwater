@@ -1,6 +1,7 @@
 #include "cutwater.h"
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 void update_window_title(CutwaterApp *app) {
   const char *filename = app->current_file ? app->current_file : "Untitled";
@@ -17,36 +18,88 @@ void cutwater_app_free(CutwaterApp *app) {
   g_free(app);
 }
 
+void setup_preview_tags(GtkTextBuffer *buffer) {
+  GtkTextTagTable *table = gtk_text_buffer_get_tag_table(buffer);
+
+  for (int i = 1; i <= 6; i++) {
+    char name[8];
+    sprintf(name, "h%d", i);
+    GtkTextTag *tag = gtk_text_tag_new(name);
+
+    double scale = 2.0 - ((i-1) * 0.2);
+    g_object_set(tag, "weight", PANGO_WEIGHT_BOLD, "scale", scale, NULL);
+    gtk_text_tag_table_add(table, tag);
+  }
+
+  GtkTextTag *bold = gtk_text_tag_new("bold");
+  g_object_set(bold, "weight", PANGO_WEIGHT_BOLD, NULL);
+  gtk_text_tag_table_add(table, bold);
+
+  GtkTextTag *italic = gtk_text_tag_new("italic");
+  g_object_set(italic, "style", PANGO_STYLE_ITALIC, NULL);
+  gtk_text_tag_table_add(table, italic);
+}
+
 void render_markdown_to_preview(GtkTextBuffer *src, GtkTextBuffer *dest) {
   GtkTextIter start, end;
   gtk_text_buffer_get_start_iter(src, &start);
   gtk_text_buffer_get_end_iter(src, &end);
 
   char *text = gtk_text_buffer_get_text(src, &start, &end, FALSE);
-
   gtk_text_buffer_set_text(dest, "", -1);
 
-  GtkTextIter dest_iter;
-  gtk_text_buffer_get_start_iter(dest, &dest_iter);
+  GtkTextIter iter;
+  gtk_text_buffer_get_start_iter(dest, &iter);
 
   const char *p = text;
-
   while (*p) {
-    if (g_str_has_prefix(p, "# ")) {
-      p += 2;
+    int heading_level = 0;
+    while (*p == '#') {
+      heading_level++;
+      p++;
+    }
+
+    if (heading_level > 0 && heading_level <= 6 && *p == ' ') {
+      p++;
       const char *line_end = strchr(p, '\n');
       if (!line_end) line_end = p + strlen(p);
+      char *line = strndup(p, line_end - p);
 
-      gtk_text_buffer_insert_with_tags_by_name(dest,
-                                               &dest_iter, p, line_end - p, "heading1", NULL);
-      gtk_text_buffer_insert(dest, &dest_iter, "\n", -1);
+      char tag_name[8];
+      sprintf(tag_name, "h%d", heading_level);
+
+      gtk_text_buffer_insert_with_tags_by_name(dest, &iter, line, line_end - p, tag_name, NULL);
+      gtk_text_buffer_insert(dest, &iter, "\n", -1);
+
+      free(line);
       p = line_end;
     } else {
       const char *line_end = strchr(p, '\n');
       if (!line_end) line_end = p + strlen(p);
 
-      gtk_text_buffer_insert(dest, &dest_iter, p, line_end - p);
-      gtk_text_buffer_insert(dest, &dest_iter, "\n", -1);
+      const char *cursor = p;
+      while (cursor < line_end) {
+        if (cursor[0] == '*' && cursor[1] == '*') {
+          cursor += 2;
+          const char *bold_end = strstr(cursor, "**");
+          if (!bold_end) bold_end = line_end;
+          gtk_text_buffer_insert_with_tags_by_name(dest, &iter, cursor, bold_end - cursor, "bold", NULL);
+          cursor = bold_end + (bold_end < line_end ? 2 : 0);
+        } else if (cursor[0] == '*') {
+          cursor++;
+          const char *italic_end = strchr(cursor, '*');
+          if (!italic_end) italic_end = line_end;
+          gtk_text_buffer_insert_with_tags_by_name(dest, &iter, cursor, italic_end - cursor, "italic", NULL);
+          cursor = italic_end + (italic_end < line_end ? 1 : 0);
+        } else {
+          const char *next = strchr(cursor, '*');
+          if (!next || next > line_end) next = line_end;
+          gtk_text_buffer_insert(dest, &iter, cursor, next - cursor);
+          cursor = next;
+        }
+      }
+
+      gtk_text_buffer_insert(dest, &iter, "\n", -1);
       p = line_end;
     }
 

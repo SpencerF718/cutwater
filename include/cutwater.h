@@ -16,6 +16,7 @@ void update_window_title(CutwaterApp *app);
 void cutwater_app_free(CutwaterApp *app);
 
 // Markdown preview
+void setup_preview_tags(GtkTextBuffer *buffer);
 void render_markdown_to_preview(GtkTextBuffer *src, GtkTextBuffer *dest);
 
 // Callbacks

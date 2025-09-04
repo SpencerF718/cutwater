@@ -37,12 +37,7 @@ static void activate(GtkApplication *gapp, gpointer user_data) {
 
   GtkTextBuffer *preview_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(preview_view));
 
-  GtkTextTagTable *tag_table = gtk_text_buffer_get_tag_table(preview_buffer);
-  GtkTextTag *heading1 = gtk_text_tag_new("heading1");
-  g_object_set(heading1,
-               "weight", PANGO_WEIGHT_BOLD,
-               "scale", 1.5, NULL);
-  gtk_text_tag_table_add(tag_table, heading1);
+  setup_preview_tags(preview_buffer);
 
   g_signal_connect(app->buffer, "changed", G_CALLBACK(on_buffer_changed), app);
   g_signal_connect(app->buffer, "changed", G_CALLBACK(on_editor_changed), preview_buffer);
