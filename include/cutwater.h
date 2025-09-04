@@ -3,6 +3,7 @@
 
 #include <gtk/gtk.h>
 
+// App structure
 typedef struct {
   GtkWidget *window;
   GtkWidget *text_view;
