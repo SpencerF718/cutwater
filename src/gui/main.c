@@ -1,97 +1,21 @@
 #include <gtk/gtk.h>
 #include "cutwater.h"
 #include "file_io.h"
-#include <string.h>
-
-void update_window_title(CutwaterApp *app) {
-  const char *filename = app->current_file ? app->current_file : "Untitled";
-  char *title = g_strdup_printf("%s%s - Cutwater",
-                                filename,
-                                app->modified ? "*" : "");
-  gtk_window_set_title(GTK_WINDOW(app->window), title);
-  g_free(title);
-}
-
-static void render_markdown_to_preview(GtkTextBuffer *src, GtkTextBuffer *dest) {
-  GtkTextIter start, end;
-  gtk_text_buffer_get_start_iter(src, &start);
-  gtk_text_buffer_get_end_iter(src, &end);
-
-  char *text = gtk_text_buffer_get_text(src, &start, &end, FALSE);
-
-  gtk_text_buffer_set_text(dest, "", -1);
-
-  GtkTextIter dest_iter;
-  gtk_text_buffer_get_start_iter(dest, &dest_iter);
-
-  const char *p = text;
-
-  while (*p) {
-    if (g_str_has_prefix(p, "# ")) {
-      p += 2;
-      const char *line_end = strchr(p, '\n');
-      if (!line_end) line_end = p + strlen(p);
-
-      gtk_text_buffer_insert_with_tags_by_name(dest,
-                                               &dest_iter, p, line_end - p, "heading1", NULL);
-      gtk_text_buffer_insert(dest, &dest_iter, "\n", -1);
-
-      p = line_end;
-    } else {
-      const char *line_end = strchr(p, '\n');
-      if (!line_end) line_end = p + strlen(p);
-
-      gtk_text_buffer_insert(dest, &dest_iter, p, line_end - p);
-      gtk_text_buffer_insert(dest, &dest_iter, "\n", -1);
-
-      p = line_end;
-    }
-
-    if (*p == '\n') p++;
-  }
-
-  g_free(text);
-
-}
-
-
-static void on_buffer_changed(GtkTextBuffer *buffer, gpointer user_data) {
-  CutwaterApp *app = user_data;
-  if (!app->modified) {
-    app->modified = TRUE;
-    update_window_title(app);
-  }
-}
-
-static void on_editor_changed(GtkTextBuffer *buffer, gpointer user_data) {
-  GtkTextBuffer *preview_buffer = GTK_TEXT_BUFFER(user_data);
-  render_markdown_to_preview(buffer, preview_buffer);
-}
-
-static void cutwater_app_free(CutwaterApp *app) {
-  if (!app) return;
-  g_free(app->current_file);
-  g_free(app);
-}
 
 static void activate(GtkApplication *gapp, gpointer user_data) {
   CutwaterApp *app = g_new0(CutwaterApp, 1);
 
   GtkWidget *window;
   GtkWidget *paned;
-  GtkWidget *scrolled_editor;
-  GtkWidget *scrolled_preview;
-  GtkWidget *text_view;
-  GtkWidget *preview_view;
+  GtkWidget *scrolled_editor, *scrolled_preview;
+  GtkWidget *text_view, *preview_view;
 
   window = gtk_application_window_new(gapp);
-  gtk_window_set_default_size(GTK_WINDOW(window), 600, 500);
+  gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
 
-  // Split view
   paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_window_set_child(GTK_WINDOW(window), paned);
- 
-  // Editor
+
   scrolled_editor = gtk_scrolled_window_new();
   text_view = gtk_text_view_new();
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_view), GTK_WRAP_WORD_CHAR);
@@ -144,8 +68,8 @@ static void activate(GtkApplication *gapp, gpointer user_data) {
                                   (const GActionEntry[]) {
                                   { "open", open_file_action, NULL, NULL, NULL },
                                   { "save", save_file_action, NULL, NULL, NULL }
-                                  },
-                                  2, app);
+                                  }, 2, app
+                                  );
 
   update_window_title(app);
   gtk_window_present(GTK_WINDOW(window));
