@@ -1,7 +1,6 @@
 #include "cutwater.h"
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 
 void update_window_title(CutwaterApp *app) {
   const char *filename = app->current_file ? app->current_file : "Untitled";
