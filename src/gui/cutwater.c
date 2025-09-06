@@ -40,11 +40,11 @@ void setup_preview_tags(GtkTextBuffer *buffer) {
   g_object_set(italic, "style", PANGO_STYLE_ITALIC, NULL);
   gtk_text_tag_table_add(table, italic);
 
-  // Code block
+  // Code inline
   GtkTextTag *code = gtk_text_tag_new("code");
   g_object_set(code, "family", "monospace", NULL);
   GdkRGBA bg, fg;
- 
+
   // TODO: Make sure to fix these colors later.
   gdk_rgba_parse(&bg, "#3c3c3c");
   gdk_rgba_parse(&fg, "#dcdcaa");
@@ -54,6 +54,21 @@ void setup_preview_tags(GtkTextBuffer *buffer) {
                NULL);
 
   gtk_text_tag_table_add(table, code);
+
+  // Codeblock
+  GtkTextTag *codeblock = gtk_text_tag_new("codeblock");
+  g_object_set(codeblock, "family", "monospace", NULL);
+
+  GdkRGBA cb_bg, cb_fg;
+  gdk_rgba_parse(&cb_bg, "#3c3c3c");
+  gdk_rgba_parse(&cb_fg, "#dcdcaa");
+  g_object_set(codeblock,
+               "background-rgba", &cb_bg,
+               "foreground-rgba", &cb_fg,
+               NULL);
+
+  gtk_text_tag_table_add(table, codeblock);
+
 }
 
 void render_markdown_to_preview(GtkTextBuffer *src, GtkTextBuffer *dest) {
@@ -68,80 +83,93 @@ void render_markdown_to_preview(GtkTextBuffer *src, GtkTextBuffer *dest) {
   gtk_text_buffer_get_start_iter(dest, &iter);
 
   const char *p = text;
+  gboolean in_codeblock = FALSE;
+
   while (*p) {
-    int heading_level = 0;
-    while (*p == '#') {
-      heading_level++;
-      p++;
+    const char *line_end = strchr(p, '\n');
+    if (!line_end) line_end = p + strlen(p);
+
+    if (strncmp(p, "```", 3) == 0) {
+      in_codeblock = !in_codeblock;
+      p = (*line_end == '\n') ? line_end + 1 : line_end;
+      continue;
     }
 
-    if (heading_level > 0 && heading_level <= 6 && *p == ' ') {
-      // Heading
-      p++;
-      const char *line_end = strchr(p, '\n');
-      if (!line_end) line_end = p + strlen(p);
-      char *line = strndup(p, line_end - p);
+    if (in_codeblock) {
+      gtk_text_buffer_insert_with_tags_by_name(dest, &iter,
+                                               p, line_end - p,
+                                               "codeblock", NULL);
+      gtk_text_buffer_insert(dest, &iter, "\n", -1);
+      p = (*line_end == '\n') ? line_end + 1 : line_end;
+      continue;
+    }
+
+    int heading_level = 0;
+    const char *cursor = p;
+    while (*cursor == '#') {
+      heading_level++;
+      cursor++;
+    }
+
+    if (heading_level > 0 && heading_level <= 6 && *cursor == ' ') {
+      cursor++;
+      char *line = strndup(cursor, line_end - cursor);
 
       char tag_name[8];
       sprintf(tag_name, "h%d", heading_level);
 
-      gtk_text_buffer_insert_with_tags_by_name(dest, &iter, line, line_end - p, tag_name, NULL);
+      gtk_text_buffer_insert_with_tags_by_name(dest, &iter,
+                                               line,
+                                               line_end - cursor,
+                                               tag_name, NULL);
       gtk_text_buffer_insert(dest, &iter, "\n", -1);
 
       free(line);
-      p = line_end;
-      // Inline
     } else {
-      const char *line_end = strchr(p, '\n');
-      if (!line_end) line_end = p + strlen(p);
+      const char *inline_cursor = p;
+      while (inline_cursor < line_end) {
+        if (inline_cursor[0] == '*' && inline_cursor[1] == '*') {
+          inline_cursor += 2;
+          const char *bold_end = strstr(inline_cursor, "**");
+          if (!bold_end || bold_end > line_end) bold_end = line_end;
+          gtk_text_buffer_insert_with_tags_by_name(dest, &iter,
+                                                   inline_cursor,
+                                                   bold_end - inline_cursor,
+                                                   "bold", NULL);
+          inline_cursor = bold_end + ((bold_end < line_end) ? 2 : 0);
 
-      const char *cursor = p;
-      while (cursor < line_end) {
-        // Bold
-        if (cursor[0] == '*' && cursor[1] == '*') {
-          cursor += 2;
-          const char *bold_end = strstr(cursor, "**");
+        } else if (inline_cursor[0] == '*') {
+          inline_cursor++;
+          const char *italic_end = strchr(inline_cursor, '*');
+          if (!italic_end || italic_end > line_end) italic_end = line_end;
+          gtk_text_buffer_insert_with_tags_by_name(dest, &iter,
+                                                   inline_cursor,
+                                                   italic_end - inline_cursor,
+                                                   "italic", NULL);
+          inline_cursor = italic_end + ((italic_end < line_end) ? 1 : 0);
 
-          if (!bold_end) bold_end = line_end;
-          gtk_text_buffer_insert_with_tags_by_name(dest, &iter, cursor, bold_end - cursor, "bold", NULL);
-
-          cursor = bold_end + (bold_end < line_end ? 2 : 0);
-
-          // Italic
-        } else if (cursor[0] == '*') {
-          cursor++;
-          const char *italic_end = strchr(cursor, '*');
-
-          if (!italic_end) italic_end = line_end;
-          gtk_text_buffer_insert_with_tags_by_name(dest, &iter, cursor, italic_end - cursor, "italic", NULL);
-
-          cursor = italic_end + (italic_end < line_end ? 1 : 0);
-
-        } else if (cursor[0] == '`') {
-          cursor++;
-          const char *code_end = strchr(cursor, '`');
-
+        } else if (inline_cursor[0] == '`') {
+          inline_cursor++;
+          const char *code_end = strchr(inline_cursor, '`');
           if (!code_end || code_end > line_end) code_end = line_end;
           gtk_text_buffer_insert_with_tags_by_name(dest, &iter,
-                                                   cursor,
-                                                   code_end - cursor,
+                                                   inline_cursor,
+                                                   code_end - inline_cursor,
                                                    "code", NULL);
-          cursor = code_end + ((code_end < line_end) ? 1 : 0);
+          inline_cursor = code_end + ((code_end < line_end) ? 1 : 0);
 
-          // Plain text
         } else {
-          const char *next = strchr(cursor, '*');
+          const char *next = strpbrk(inline_cursor, "*`");
           if (!next || next > line_end) next = line_end;
-          gtk_text_buffer_insert(dest, &iter, cursor, next - cursor);
-          cursor = next;
+          gtk_text_buffer_insert(dest, &iter,
+                                 inline_cursor, next - inline_cursor);
+          inline_cursor = next;
         }
       }
-
       gtk_text_buffer_insert(dest, &iter, "\n", -1);
-      p = line_end;
     }
 
-    if (*p == '\n') p++;
+    p = (*line_end == '\n') ? line_end + 1 : line_end;
   }
 
   g_free(text);
