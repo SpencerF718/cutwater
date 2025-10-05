@@ -74,6 +74,21 @@ void setup_preview_tags(GtkTextBuffer *buffer) {
 
   gtk_text_tag_table_add(table, codeblock);
 
+  // Blockquote
+  GtkTextTag *blockquote = gtk_text_tag_new("blockquote");
+  GdkRGBA bq_bg, bq_fg;
+  gdk_rgba_parse(&bq_bg, "#3c3c3c");
+  gdk_rgba_parse(&bq_fg, "#dcdcaa");
+  g_object_set(blockquote,
+               "background-rgba", &bq_bg,
+               "foreground-rgba", &bq_fg,
+               "left-margin", 15,
+               "indent", 10,
+               "pixels-above-lines", 3,
+               "pixels-below-lines", 3,
+               NULL);
+  gtk_text_tag_table_add(table, blockquote);
+
 }
 
 void render_markdown_to_preview(GtkTextBuffer *src, GtkTextBuffer *dest) {
@@ -109,6 +124,22 @@ void render_markdown_to_preview(GtkTextBuffer *src, GtkTextBuffer *dest) {
       continue;
     }
 
+    if (*p == '>' && (*(p + 1) == ' ' || *(p + 1) == '>')) {
+      const char *quote_start = p + 1;
+      if (*quote_start == ' ') quote_start++;
+
+      char *quote_text = strndup(quote_start, line_end - quote_start);
+      gtk_text_buffer_insert_with_tags_by_name(dest, &iter,
+                                               quote_text,
+                                               -1,
+                                               "blockquote", NULL);
+      gtk_text_buffer_insert(dest, &iter, "\n", -1);
+      free(quote_text);
+
+      p = (*line_end == '\n') ? line_end + 1 : line_end;
+      continue;
+    }
+
     int heading_level = 0;
     const char *cursor = p;
     while (*cursor == '#') {
@@ -130,6 +161,7 @@ void render_markdown_to_preview(GtkTextBuffer *src, GtkTextBuffer *dest) {
       gtk_text_buffer_insert(dest, &iter, "\n", -1);
 
       free(line);
+
     } else {
       const char *inline_cursor = p;
       while (inline_cursor < line_end) {
