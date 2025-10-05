@@ -40,6 +40,11 @@ void setup_preview_tags(GtkTextBuffer *buffer) {
   g_object_set(italic, "style", PANGO_STYLE_ITALIC, NULL);
   gtk_text_tag_table_add(table, italic);
 
+  // Strikethrough
+  GtkTextTag *strike = gtk_text_tag_new("strikethrough");
+  g_object_set(strike, "strikethrough", TRUE, NULL);
+  gtk_text_tag_table_add(table, strike);
+
   // Code inline
   GtkTextTag *code = gtk_text_tag_new("code");
   g_object_set(code, "family", "monospace", NULL);
@@ -147,6 +152,16 @@ void render_markdown_to_preview(GtkTextBuffer *src, GtkTextBuffer *dest) {
                                                    italic_end - inline_cursor,
                                                    "italic", NULL);
           inline_cursor = italic_end + ((italic_end < line_end) ? 1 : 0);
+
+        } else if (inline_cursor[0] == '~' && inline_cursor[1] == '~') {
+          inline_cursor += 2;
+          const char *strike_end = strstr(inline_cursor, "~~");
+          if (!strike_end || strike_end > line_end) strike_end = line_end;
+          gtk_text_buffer_insert_with_tags_by_name(dest, &iter,
+                                                   inline_cursor,
+                                                   strike_end - inline_cursor,
+                                                   "strikethrough", NULL);
+          inline_cursor = strike_end + ((strike_end < line_end) ? 2 : 0);
 
         } else if (inline_cursor[0] == '`') {
           inline_cursor++;
