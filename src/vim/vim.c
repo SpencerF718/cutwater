@@ -4,7 +4,7 @@
 #include "vim.h"
 #include "cutwater.h"
 
-static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_date);
+static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_data);
 
 void vim_init(CutwaterApp *app) {
   VimState *vim_state = g_new0(VimState, 1);
@@ -22,7 +22,7 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
   VimState *vim_state = app->vim_state;
   GtkTextBuffer *buffer = app->buffer;
   GtkTextIter iter;
-  
+
   gtk_text_buffer_get_iter_at_mark(buffer, &iter, gtk_text_buffer_get_insert(buffer));
 
   if (vim_state->mode == NORMAL_MODE) {
@@ -36,27 +36,31 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
 
       // -- Character Movement --
       case GDK_KEY_h:
-        gtk_text_iter_backward_char(&iter);
-        gtk_text_buffer_place_cursor(buffer, &iter);
+        if (gtk_text_iter_get_line_offset(&iter) > 0) {
+            gtk_text_iter_backward_char(&iter);
+        }
         break;
-        case GDK_KEY_j:
-        gtk_text_iter_forward_line(&iter);
-        gtk_text_buffer_place_cursor(buffer, &iter);
+      case GDK_KEY_j:
+        if (gtk_text_iter_get_line(&iter) < gtk_text_buffer_get_line_count(buffer) - 1) {
+          gtk_text_iter_forward_line(&iter);
+        }
         break;
       case GDK_KEY_k:
-        gtk_text_iter_backward_line(&iter);
-        gtk_text_buffer_place_cursor(buffer, &iter);
+        if (gtk_text_iter_get_line(&iter) > 0) {
+          gtk_text_iter_backward_line(&iter);
+        }
         break;
       case GDK_KEY_l:
-        gtk_text_iter_forward_char(&iter);
-        gtk_text_buffer_place_cursor(buffer, &iter);
+        if (!gtk_text_iter_ends_line(&iter)) {
+            gtk_text_iter_forward_char(&iter);
+        }
         break;
 
       // -- Word Movement --
       case GDK_KEY_w:
         gtk_text_iter_forward_word_end(&iter);
         if (!gtk_text_iter_is_end(&iter)) {
-            gtk_text_iter_forward_char(&iter);
+          gtk_text_iter_forward_char(&iter);
         }
         break;
       case GDK_KEY_b:
@@ -73,6 +77,7 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
       case GDK_KEY_dollar:
         gtk_text_iter_forward_to_line_end(&iter);
         break;
+
       default:
         break;
     }
@@ -91,3 +96,4 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
   }
   return FALSE;
 }
+
