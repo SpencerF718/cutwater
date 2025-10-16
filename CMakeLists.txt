@@ -20,6 +20,7 @@ add_definitions(${GTK4_CFLAGS_OTHER})
 # Source files
 set(SOURCES
     src/gui/main.c
+    src/gui/cutwater.c
     src/file_io/file_io.c
 )
 
