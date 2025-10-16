@@ -1,4 +1,4 @@
-#ifdef VIM_H
+#ifndef VIM_H
 #define VIM_H
 
 #include "cutwater.h"
@@ -16,6 +16,6 @@ typedef struct {
 } VimState;
 
 // Initializes Vim motion implementation and integrates with text view
-void vim_init(Cutwater *app);
+void vim_init(CutwaterApp *app);
 
 #endif
