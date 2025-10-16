@@ -1,11 +1,15 @@
+#include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
+
 #include "vim.h"
+#include "cutwater.h"
 
 static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_date);
 
 void vim_init(CutwaterApp *app) {
   VimState *vim_state = g_new0(VimState, 1);
   vim_state->app = app;
-  vim_state-> = NORMAL_MODE;
+  vim_state->mode = NORMAL_MODE;
 
   app->vim_state = vim_state;
   GtkEventController *controller = gtk_event_controller_key_new();
@@ -27,17 +31,17 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
       default:
         break;
     }
-    return GTK_EVENT_STOP;
-  } else if (vim_state->mode == INSERT MODE) {
+    return TRUE;
+  } else if (vim_state->mode == INSERT_MODE) {
 
     switch(keyval) {
       case GDK_KEY_Escape:
         vim_state->mode = NORMAL_MODE;
         g_print("Switched to NORMAL mode\n");
-        return GDK_EVENT_STOP;
+        return TRUE;
       default:
-        return GTK_EVENT_PROCEED;
+        return FALSE;
     }
   }
-  return GDK_EVENT_PROCEED;
+  return FALSE;
 }

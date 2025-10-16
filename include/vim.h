@@ -1,7 +1,10 @@
 #ifndef VIM_H
 #define VIM_H
 
-#include "cutwater.h"
+//#include "cutwater.h"
+
+typedef struct CutwaterApp CutwaterApp;
+typedef struct VimState VimState;
 
 // Holds Vim mode
 typedef enum {
@@ -10,10 +13,10 @@ typedef enum {
 } VimMode;
 
 // Holds state information
-typedef struct {
-  CutwaterApp *app,
+struct VimState{
+  CutwaterApp *app;
   VimMode mode;
-} VimState;
+};
 
 // Initializes Vim motion implementation and integrates with text view
 void vim_init(CutwaterApp *app);

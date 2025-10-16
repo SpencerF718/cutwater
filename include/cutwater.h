@@ -5,13 +5,13 @@
 #include "vim.h"
 
 // App structure
-typedef struct {
+typedef struct CutwaterApp {
   GtkWidget *window;
   GtkWidget *text_view;
   GtkTextBuffer *buffer;
   char *current_file;
   gboolean modified;
-  VimState *vim_state;
+  struct VimState *vim_state;
 } CutwaterApp;
 
 // App utilities
