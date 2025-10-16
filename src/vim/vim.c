@@ -28,10 +28,13 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
   if (vim_state->mode == NORMAL_MODE) {
 
     switch(keyval) {
+      // -- Mode Switching --
       case GDK_KEY_i:
         vim_state->mode = INSERT_MODE;
         g_print("Switched to INSERT mode\n");
         break;
+
+      // -- Character Movement --
       case GDK_KEY_h:
         gtk_text_iter_backward_char(&iter);
         gtk_text_buffer_place_cursor(buffer, &iter);
@@ -48,9 +51,32 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
         gtk_text_iter_forward_char(&iter);
         gtk_text_buffer_place_cursor(buffer, &iter);
         break;
+
+      // -- Word Movement --
+      case GDK_KEY_w:
+        gtk_text_iter_forward_word_end(&iter);
+        if (!gtk_text_iter_is_end(&iter)) {
+            gtk_text_iter_forward_char(&iter);
+        }
+        break;
+      case GDK_KEY_b:
+        gtk_text_iter_backward_word_start(&iter);
+        break;
+      case GDK_KEY_e:
+        gtk_text_iter_forward_word_end(&iter);
+        break;
+
+      // -- Line Movement --
+      case GDK_KEY_0:
+        gtk_text_iter_set_line_offset(&iter, 0);
+        break;
+      case GDK_KEY_dollar:
+        gtk_text_iter_forward_to_line_end(&iter);
+        break;
       default:
         break;
     }
+    gtk_text_buffer_place_cursor(buffer, &iter);
     return TRUE;
   } else if (vim_state->mode == INSERT_MODE) {
 
