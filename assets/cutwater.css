@@ -3,6 +3,7 @@ textview {
   color: #ffffff;
   font-family: monospace;
   font-size: 14px;
+  caret-color: #ffffff;
 }
 
 window {
