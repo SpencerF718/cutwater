@@ -2,6 +2,7 @@
 #define CUTWATER_H
 
 #include <gtk/gtk.h>
+#include "vim.h"
 
 // App structure
 typedef struct {
@@ -10,6 +11,7 @@ typedef struct {
   GtkTextBuffer *buffer;
   char *current_file;
   gboolean modified;
+  VimState *vim_state;
 } CutwaterApp;
 
 // App utilities

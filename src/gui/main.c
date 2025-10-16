@@ -1,6 +1,7 @@
 #include <gtk/gtk.h>
 #include "cutwater.h"
 #include "file_io.h"
+#include "vim.h"
 
 static void activate(GtkApplication *gapp, gpointer user_data) {
   CutwaterApp *app = g_new0(CutwaterApp, 1);
@@ -34,6 +35,8 @@ static void activate(GtkApplication *gapp, gpointer user_data) {
   app->buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
   app->current_file = NULL;
   app->modified = FALSE;
+
+  vim_init(app);
 
   GtkTextBuffer *preview_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(preview_view));
 
