@@ -16,6 +16,7 @@ typedef enum {
 struct VimState{
   CutwaterApp *app;
   VimMode mode;
+  gint saved_col;
 };
 
 // Initializes Vim motion implementation and integrates with text view
