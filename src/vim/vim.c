@@ -5,12 +5,15 @@
 #include "cutwater.h"
 
 static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_data);
+static void execute_operator(VimState *vim_state, GtkTextIter *start, GtkTextIter *end);
+static void delete_text(GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end);
 
 void vim_init(CutwaterApp *app) {
   VimState *vim_state = g_new0(VimState, 1);
   vim_state->app = app;
   vim_state->mode = NORMAL_MODE;
   vim_state->saved_col = 0;
+  vim_state->pending_operator = '\0';
 
   app->vim_state = vim_state;
   GtkEventController *controller = gtk_event_controller_key_new();
@@ -22,6 +25,18 @@ static void update_saved_col(VimState *vim_state) {
   GtkTextIter iter;
   gtk_text_buffer_get_iter_at_mark(vim_state->app->buffer, &iter, gtk_text_buffer_get_insert(vim_state->app->buffer));
   vim_state->saved_col = gtk_text_iter_get_line_offset(&iter);
+}
+
+static void delete_text(GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end) {
+  gtk_text_buffer_delete(buffer, start, end);
+}
+
+static void execute_operator(VimState *vim_state, GtkTextIter *start, GtkTextIter *end) {
+  switch(vim_state->pending_operator) {
+    case 'd':
+      delete_text(vim_state->app->buffer, start, end);
+      break;
+  }
 }
 
 static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_data) {
@@ -41,6 +56,13 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
         g_print("Switched to INSERT mode\n");
         update_saved_col(vim_state);
         break;
+
+      // -- Operators --
+      case GDK_KEY_d:
+        vim_state->mode = OPERATOR_PENDING_MODE;
+        vim_state->pending_operator = 'd';
+        g_print("Operator pending: d\n");
+        return TRUE;
 
       // -- Character Movement --
       case GDK_KEY_h:
@@ -128,6 +150,7 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
     }
     gtk_text_buffer_place_cursor(buffer, &iter);
     return TRUE;
+
   } else if (vim_state->mode == INSERT_MODE) {
 
     switch(keyval) {
@@ -138,6 +161,35 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
       default:
         return FALSE;
     }
+
+  } else if (vim_state->mode == OPERATOR_PENDING_MODE) {
+
+    GtkTextIter start_iter;
+    gtk_text_buffer_get_iter_at_mark(buffer, &start_iter, gtk_text_buffer_get_insert(buffer));
+    GtkTextIter end_iter = start_iter;
+
+    switch(keyval) {
+      case GDK_KEY_w:
+        gtk_text_iter_forward_word_end(&end_iter);
+        if (!gtk_text_iter_is_end(&end_iter)) {
+          gtk_text_iter_forward_char(&end_iter);
+        }
+        execute_operator(vim_state, &start_iter, &end_iter);
+        break;
+      case GDK_KEY_d:
+        gtk_text_iter_set_line_offset(&start_iter, 0);
+        gtk_text_iter_forward_to_line_end(&end_iter);
+        if (!gtk_text_iter_is_end(&end_iter)) {
+          gtk_text_iter_forward_char(&end_iter);
+        }
+        execute_operator(vim_state, &start_iter, &end_iter);
+        break;
+      default:
+        break;
+    }
+    vim_state->mode = NORMAL_MODE;
+    vim_state->pending_operator = '\0';
+    return TRUE;
   }
   return FALSE;
 }
