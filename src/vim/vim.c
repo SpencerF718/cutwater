@@ -21,10 +21,8 @@ void vim_init(CutwaterApp *app) {
   gtk_widget_add_controller(app->text_view, controller);
 }
 
-static void update_saved_col(VimState *vim_state) {
-  GtkTextIter iter;
-  gtk_text_buffer_get_iter_at_mark(vim_state->app->buffer, &iter, gtk_text_buffer_get_insert(vim_state->app->buffer));
-  vim_state->saved_col = gtk_text_iter_get_line_offset(&iter);
+static void update_saved_col(VimState *vim_state, GtkTextIter *iter) {
+  vim_state->saved_col = gtk_text_iter_get_line_offset(iter);
 }
 
 static void delete_text(GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end) {
@@ -54,7 +52,7 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
       case GDK_KEY_i:
         vim_state->mode = INSERT_MODE;
         g_print("Switched to INSERT mode\n");
-        update_saved_col(vim_state);
+        update_saved_col(vim_state, &iter);
         break;
 
       // -- Operators --
@@ -68,25 +66,22 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
       case GDK_KEY_h:
         if (gtk_text_iter_get_line_offset(&iter) > 0) {
           gtk_text_iter_backward_char(&iter);
+          update_saved_col(vim_state, &iter);
         }
-        update_saved_col(vim_state);
         break;
       case GDK_KEY_j:
         {
           gint line = gtk_text_iter_get_line(&iter);
           if (line < gtk_text_buffer_get_line_count(buffer) - 1) {
             gtk_text_iter_set_line(&iter, line + 1);
+            gint chars_on_next_line = gtk_text_iter_get_chars_in_line(&iter);
 
-            GtkTextIter next_line_start;
-            gtk_text_buffer_get_iter_at_line(buffer, &next_line_start, line + 1);
-            GtkTextIter next_line_end = next_line_start;
-            gtk_text_iter_forward_to_line_end(&next_line_end);
-            gint next_line_length = gtk_text_iter_get_line_offset(&next_line_end);
-
-            if (vim_state->saved_col > next_line_length) {
-              iter = next_line_end;
+            if (chars_on_next_line == 0) {
+                gtk_text_iter_set_line_offset(&iter, 0);
+            } else if (vim_state->saved_col >= chars_on_next_line) {
+                gtk_text_iter_set_line_offset(&iter, chars_on_next_line - 1);
             } else {
-              gtk_text_iter_set_line_offset(&iter, vim_state->saved_col);
+                gtk_text_iter_set_line_offset(&iter, vim_state->saved_col);
             }
           }
         }
@@ -96,17 +91,14 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
           gint line = gtk_text_iter_get_line(&iter);
           if (line > 0) {
             gtk_text_iter_set_line(&iter, line - 1);
+            gint chars_on_prev_line = gtk_text_iter_get_chars_in_line(&iter);
 
-            GtkTextIter prev_line_start;
-            gtk_text_buffer_get_iter_at_line(buffer, &prev_line_start, line - 1);
-            GtkTextIter prev_line_end = prev_line_start;
-            gtk_text_iter_forward_to_line_end(&prev_line_end);
-            gint prev_line_length = gtk_text_iter_get_line_offset(&prev_line_end);
-
-            if (vim_state->saved_col > prev_line_length) {
-              iter = prev_line_end;
+            if (chars_on_prev_line == 0) {
+                gtk_text_iter_set_line_offset(&iter, 0);
+            } else if (vim_state->saved_col >= chars_on_prev_line) {
+                gtk_text_iter_set_line_offset(&iter, chars_on_prev_line - 1);
             } else {
-              gtk_text_iter_set_line_offset(&iter, vim_state->saved_col);
+                gtk_text_iter_set_line_offset(&iter, vim_state->saved_col);
             }
           }
         }
@@ -114,8 +106,8 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
       case GDK_KEY_l:
         if (!gtk_text_iter_ends_line(&iter)) {
           gtk_text_iter_forward_char(&iter);
+          update_saved_col(vim_state, &iter);
         }
-        update_saved_col(vim_state);
         break;
 
       // -- Word Movement --
@@ -124,25 +116,25 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
         if (!gtk_text_iter_is_end(&iter)) {
           gtk_text_iter_forward_char(&iter);
         }
-        update_saved_col(vim_state);
+        update_saved_col(vim_state, &iter);
         break;
       case GDK_KEY_b:
         gtk_text_iter_backward_word_start(&iter);
-        update_saved_col(vim_state);
+        update_saved_col(vim_state, &iter);
         break;
       case GDK_KEY_e:
         gtk_text_iter_forward_word_end(&iter);
-        update_saved_col(vim_state);
+        update_saved_col(vim_state, &iter);
         break;
 
       // -- Line Movement --
       case GDK_KEY_0:
         gtk_text_iter_set_line_offset(&iter, 0);
-        update_saved_col(vim_state);
+        update_saved_col(vim_state, &iter);
         break;
       case GDK_KEY_dollar:
         gtk_text_iter_forward_to_line_end(&iter);
-        update_saved_col(vim_state);
+        update_saved_col(vim_state, &iter);
         break;
 
       default:
