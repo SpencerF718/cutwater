@@ -77,11 +77,11 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
             gint chars_on_next_line = gtk_text_iter_get_chars_in_line(&iter);
 
             if (chars_on_next_line == 0) {
-                gtk_text_iter_set_line_offset(&iter, 0);
+              gtk_text_iter_set_line_offset(&iter, 0);
             } else if (vim_state->saved_col >= chars_on_next_line) {
-                gtk_text_iter_set_line_offset(&iter, chars_on_next_line - 1);
+              gtk_text_iter_set_line_offset(&iter, chars_on_next_line - 1);
             } else {
-                gtk_text_iter_set_line_offset(&iter, vim_state->saved_col);
+              gtk_text_iter_set_line_offset(&iter, vim_state->saved_col);
             }
           }
         }
@@ -94,11 +94,11 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
             gint chars_on_prev_line = gtk_text_iter_get_chars_in_line(&iter);
 
             if (chars_on_prev_line == 0) {
-                gtk_text_iter_set_line_offset(&iter, 0);
+              gtk_text_iter_set_line_offset(&iter, 0);
             } else if (vim_state->saved_col >= chars_on_prev_line) {
-                gtk_text_iter_set_line_offset(&iter, chars_on_prev_line - 1);
+              gtk_text_iter_set_line_offset(&iter, chars_on_prev_line - 1);
             } else {
-                gtk_text_iter_set_line_offset(&iter, vim_state->saved_col);
+              gtk_text_iter_set_line_offset(&iter, vim_state->saved_col);
             }
           }
         }
