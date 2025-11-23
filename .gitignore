@@ -10,6 +10,9 @@
 # Markdown
 *.md
 
+# Shell Script
+*.sh
+
 # Prerequisites
 *.d
 
