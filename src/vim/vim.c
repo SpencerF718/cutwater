@@ -162,10 +162,30 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
         update_saved_col(vim_state, &iter);
         break;
 
+      case GDK_KEY_G:
+        gtk_text_buffer_get_end_iter(buffer, &iter);
+        gtk_text_iter_set_line_offset(&iter, 0);
+        update_saved_col(vim_state, &iter);
+        break;
+
+      case GDK_KEY_g:
+        vim_state->mode = PREFIX_G_MODE;
+        return TRUE;
+
       default:
         break;
     }
     gtk_text_buffer_place_cursor(buffer, &iter);
+    return TRUE;
+
+  } else if (vim_state->mode == PREFIX_G_MODE) {
+
+    if (keyval == GDK_KEY_g) {
+      gtk_text_buffer_get_start_iter(buffer, &iter);
+      update_saved_col(vim_state, &iter);
+      gtk_text_buffer_place_cursor(buffer, &iter);
+    }
+    vim_state->mode = NORMAL_MODE;
     return TRUE;
 
   } else if (vim_state->mode == INSERT_MODE) {

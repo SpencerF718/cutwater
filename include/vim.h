@@ -11,6 +11,7 @@ typedef enum {
   NORMAL_MODE,
   INSERT_MODE,
   OPERATOR_PENDING_MODE,
+  PREFIX_G_MODE,
 } VimMode;
 
 // Holds state information
