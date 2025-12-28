@@ -20,6 +20,7 @@ struct VimState{
   VimMode mode;
   gint saved_col;
   char pending_operator;
+  char *register_content;
 };
 
 // Initializes Vim motion implementation and integrates with text view

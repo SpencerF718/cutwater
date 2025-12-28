@@ -7,6 +7,7 @@
 static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_data);
 static void execute_operator(VimState *vim_state, GtkTextIter *start, GtkTextIter *end);
 static void delete_text(GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end);
+static void yank_text(VimState *vim_state, GtkTextIter *start, GtkTextIter *end);
 
 void vim_init(CutwaterApp *app) {
   VimState *vim_state = g_new0(VimState, 1);
@@ -14,6 +15,7 @@ void vim_init(CutwaterApp *app) {
   vim_state->mode = NORMAL_MODE;
   vim_state->saved_col = 0;
   vim_state->pending_operator = '\0';
+  vim_state->register_content = NULL;
 
   app->vim_state = vim_state;
   GtkEventController *controller = gtk_event_controller_key_new();
@@ -29,10 +31,20 @@ static void delete_text(GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *
   gtk_text_buffer_delete(buffer, start, end);
 }
 
+static void yank_text(VimState *vim_state, GtkTextIter *start, GtkTextIter *end) {
+  if (vim_state->register_content) {
+    g_free(vim_state->register_content);
+  }
+  vim_state->register_content = gtk_text_buffer_get_text(vim_state->app->buffer, start, end, FALSE);
+}
+
 static void execute_operator(VimState *vim_state, GtkTextIter *start, GtkTextIter *end) {
   switch(vim_state->pending_operator) {
     case 'd':
       delete_text(vim_state->app->buffer, start, end);
+      break;
+    case 'y':
+      yank_text(vim_state, start, end);
       break;
   }
 }
@@ -48,7 +60,6 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
   if (vim_state->mode == NORMAL_MODE) {
 
     switch(keyval) {
-      // -- Mode Switching --
       case GDK_KEY_i:
         vim_state->mode = INSERT_MODE;
         g_print("Switched to INSERT mode\n");
@@ -80,14 +91,26 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
         update_saved_col(vim_state, &iter);
         break;
 
-      // -- Operators --
       case GDK_KEY_d:
         vim_state->mode = OPERATOR_PENDING_MODE;
         vim_state->pending_operator = 'd';
         g_print("Operator pending: d\n");
         return TRUE;
+      case GDK_KEY_y:
+        vim_state->mode = OPERATOR_PENDING_MODE;
+        vim_state->pending_operator = 'y';
+        g_print("Operator pending: y\n");
+        return TRUE;
+      case GDK_KEY_p:
+        if (vim_state->register_content) {
+            if (!gtk_text_iter_is_end(&iter)) {
+                gtk_text_iter_forward_char(&iter);
+            }
+            gtk_text_buffer_insert(buffer, &iter, vim_state->register_content, -1);
+            gtk_text_iter_backward_char(&iter);
+        }
+        return TRUE;
 
-      // -- Character Movement --
       case GDK_KEY_h:
         if (gtk_text_iter_get_line_offset(&iter) > 0) {
           gtk_text_iter_backward_char(&iter);
@@ -135,7 +158,6 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
         }
         break;
 
-      // -- Word Movement --
       case GDK_KEY_w:
         gtk_text_iter_forward_word_end(&iter);
         if (!gtk_text_iter_is_end(&iter)) {
@@ -152,7 +174,6 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
         update_saved_col(vim_state, &iter);
         break;
 
-      // -- Line Movement --
       case GDK_KEY_0:
         gtk_text_iter_set_line_offset(&iter, 0);
         update_saved_col(vim_state, &iter);
@@ -214,12 +235,24 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
         execute_operator(vim_state, &start_iter, &end_iter);
         break;
       case GDK_KEY_d:
-        gtk_text_iter_set_line_offset(&start_iter, 0);
-        gtk_text_iter_forward_to_line_end(&end_iter);
-        if (!gtk_text_iter_is_end(&end_iter)) {
-          gtk_text_iter_forward_char(&end_iter);
+        if (vim_state->pending_operator == 'd') {
+             gtk_text_iter_set_line_offset(&start_iter, 0);
+             gtk_text_iter_forward_to_line_end(&end_iter);
+             if (!gtk_text_iter_is_end(&end_iter)) {
+               gtk_text_iter_forward_char(&end_iter);
+             }
+             execute_operator(vim_state, &start_iter, &end_iter);
         }
-        execute_operator(vim_state, &start_iter, &end_iter);
+        break;
+      case GDK_KEY_y:
+        if (vim_state->pending_operator == 'y') {
+             gtk_text_iter_set_line_offset(&start_iter, 0);
+             gtk_text_iter_forward_to_line_end(&end_iter);
+             if (!gtk_text_iter_is_end(&end_iter)) {
+               gtk_text_iter_forward_char(&end_iter);
+             }
+             execute_operator(vim_state, &start_iter, &end_iter);
+        }
         break;
       default:
         break;
