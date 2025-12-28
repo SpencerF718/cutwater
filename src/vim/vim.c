@@ -54,6 +54,31 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
         g_print("Switched to INSERT mode\n");
         update_saved_col(vim_state, &iter);
         break;
+      case GDK_KEY_a:
+        if (!gtk_text_iter_is_end(&iter)) {
+          gtk_text_iter_forward_char(&iter);
+        }
+        vim_state->mode = INSERT_MODE;
+        update_saved_col(vim_state, &iter);
+        break;
+      case GDK_KEY_A:
+        gtk_text_iter_forward_to_line_end(&iter);
+        vim_state->mode = INSERT_MODE;
+        update_saved_col(vim_state, &iter);
+        break;
+      case GDK_KEY_o:
+        gtk_text_iter_forward_to_line_end(&iter);
+        gtk_text_buffer_insert(buffer, &iter, "\n", 1);
+        vim_state->mode = INSERT_MODE;
+        update_saved_col(vim_state, &iter);
+        break;
+      case GDK_KEY_O:
+        gtk_text_iter_set_line_offset(&iter, 0);
+        gtk_text_buffer_insert(buffer, &iter, "\n", 1);
+        gtk_text_iter_backward_char(&iter);
+        vim_state->mode = INSERT_MODE;
+        update_saved_col(vim_state, &iter);
+        break;
 
       // -- Operators --
       case GDK_KEY_d:
