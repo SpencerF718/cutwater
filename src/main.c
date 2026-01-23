@@ -1,10 +1,3 @@
-#include <ncurses.h>
-
-int main() {
-  initscr();
-  printw("Hello World !!!");
-  refresh();
-  getch();
-  endwin();
+int main () {
   return 0;
 }
