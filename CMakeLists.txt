@@ -24,7 +24,7 @@ set(TEST_SOURCES
 add_executable(cutwater ${SOURCES})
 add_executable(run_tests ${TEST_SOURCES})
 
-target_include_directories(cutwater PRIVATE include)
+target_include_directories(cutwater PRIVATE include ${CURSES_INCLUDE_DIRS})
 target_include_directories(run_tests PRIVATE include)
 
 target_link_libraries(cutwater ${CURSES_LIBRARIES})
