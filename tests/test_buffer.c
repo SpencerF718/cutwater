@@ -122,5 +122,8 @@ int main(void) {
   test_buffer_delete();
   test_buffer_move_left();
   test_buffer_move_right();
+
+  printf("--- ALL TESTS PASSED ---\n");
+
   return 0;
 }
