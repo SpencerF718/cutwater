@@ -35,6 +35,24 @@ void test_buffer_insert(void) {
   printf("PASSED: buffer_insert\n");
 }
 
+void test_buffer_delete(void) {
+  printf("TESTING: buffer_delete\n");
+
+  EditorBuffer eb;
+  buffer_init(&eb, 10);
+  buffer_insert(&eb, 'A');
+
+  assert(buffer_delete(&eb) == 0);
+
+  assert(eb.capacity == 10);
+  assert(eb.gap_start == 0);
+  assert(eb.gap_end == 10);
+  assert(eb.data != NULL);
+
+  buffer_free(&eb);
+  printf("PASSED: buffer_delete\n");
+}
+
 void test_buffer_move_left(void) {
   printf("TESTING: buffer_move_left\n");
 
@@ -56,9 +74,33 @@ void test_buffer_move_left(void) {
   printf("PASSED: buffer_move_left\n");
 }
 
+void test_buffer_move_right(void) {
+  printf("TESTING: buffer_move_right\n");
+
+  EditorBuffer eb;
+  buffer_init(&eb, 10);
+  buffer_insert(&eb, 'A');
+  buffer_insert(&eb, 'B');
+  buffer_move_left(&eb);
+
+  assert(buffer_move_right(&eb) == 0);
+
+  assert(eb.capacity == 10);
+  assert(eb.gap_start == 2);
+  assert(eb.gap_end == 10);
+  assert(eb.data[0] == 'A');
+  assert(eb.data[1] == 'B');
+  assert(eb.data != NULL);
+
+  buffer_free(&eb);
+  printf("PASSED: buffer_move_right\n");
+}
+
 int main(void) {
   test_buffer_init();
   test_buffer_insert();
+  test_buffer_delete();
   test_buffer_move_left();
+  test_buffer_move_right();
   return 0;
 }
