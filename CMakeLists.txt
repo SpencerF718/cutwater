@@ -16,8 +16,15 @@ set(SOURCES
     src/buffer.c
 )
 
+set(TEST_SOURCES
+    tests/test_buffer.c
+    src/buffer.c
+)
+
 add_executable(cutwater ${SOURCES})
+add_executable(run_tests ${TEST_SOURCES})
 
 target_include_directories(cutwater PRIVATE include)
+target_include_directories(run_tests PRIVATE include)
 
 target_link_libraries(cutwater ${CURSES_LIBRARIES})
