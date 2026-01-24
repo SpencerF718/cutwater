@@ -7,7 +7,8 @@ void test_buffer_init(void) {
 
     EditorBuffer eb;
 
-    assert(buffer_init(&eb, 10) == 0);
+    int buffer_init_result = buffer_init(&eb, 10);
+    assert(buffer_init_result == 0);
 
     assert(eb.capacity == 10);
     assert(eb.gap_start == 0);
@@ -42,7 +43,8 @@ void test_buffer_insert(void) {
     EditorBuffer eb;
     buffer_init(&eb, 10);
 
-    assert(buffer_insert(&eb, 'A') == 0);
+    int buffer_insert_result = buffer_insert(&eb, 'A');
+    assert(buffer_insert_result == 0);
 
     assert(eb.capacity == 10);
     assert(eb.gap_start == 1);
@@ -61,7 +63,8 @@ void test_buffer_delete(void) {
     buffer_init(&eb, 10);
     buffer_insert(&eb, 'A');
 
-    assert(buffer_delete(&eb) == 0);
+    int buffer_delete_result = buffer_delete(&eb);
+    assert(buffer_delete_result == 0);
 
     assert(eb.capacity == 10);
     assert(eb.gap_start == 0);
@@ -80,7 +83,8 @@ void test_buffer_move_left(void) {
     buffer_insert(&eb, 'A');
     buffer_insert(&eb, 'B');
 
-    assert(buffer_move_left(&eb) == 0);
+    int buffer_move_left_result = buffer_move_left(&eb);
+    assert(buffer_move_left_result == 0);
 
     assert(eb.capacity == 10);
     assert(eb.gap_start == 1);
@@ -102,7 +106,8 @@ void test_buffer_move_right(void) {
     buffer_insert(&eb, 'B');
     buffer_move_left(&eb);
 
-    assert(buffer_move_right(&eb) == 0);
+    int buffer_move_right_result = buffer_move_right(&eb);
+    assert(buffer_move_right_result == 0);
 
     assert(eb.capacity == 10);
     assert(eb.gap_start == 2);
