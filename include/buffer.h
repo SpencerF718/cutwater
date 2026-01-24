@@ -11,6 +11,7 @@ typedef struct EditorBuffer {
 } EditorBuffer;
 
 int buffer_init(EditorBuffer *eb, size_t initial_capacity);
+int buffer_grow(EditorBuffer *eb);
 int buffer_insert(EditorBuffer *eb, char c);
 int buffer_delete(EditorBuffer *eb);
 int buffer_move_left(EditorBuffer *eb);

@@ -18,6 +18,24 @@ void test_buffer_init(void) {
   printf("PASSED: buffer_init\n");
 }
 
+void test_buffer_grow(void) {
+  printf("TESTING: buffer_grow\n");
+
+  EditorBuffer eb;
+  buffer_init(&eb, 2);
+  buffer_insert(&eb, 'A');
+  buffer_insert(&eb, 'B');
+  buffer_insert(&eb, 'C');
+
+  assert(eb.capacity == 4);
+  assert(eb.gap_start == 3);
+  assert(eb.gap_end == 4);
+  assert(eb.data != NULL);
+
+  buffer_free(&eb);
+  printf("PASSED: buffer_grow\n");
+}
+
 void test_buffer_insert(void) {
   printf("TESTING: buffer_insert\n");
 
@@ -34,6 +52,7 @@ void test_buffer_insert(void) {
   buffer_free(&eb);
   printf("PASSED: buffer_insert\n");
 }
+
 
 void test_buffer_delete(void) {
   printf("TESTING: buffer_delete\n");
@@ -98,6 +117,7 @@ void test_buffer_move_right(void) {
 
 int main(void) {
   test_buffer_init();
+  test_buffer_grow();
   test_buffer_insert();
   test_buffer_delete();
   test_buffer_move_left();
