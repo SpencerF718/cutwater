@@ -9,6 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
+set(CURSES_NEED_WIDE TRUE)
 find_package(Curses REQUIRED)
 
 set(SOURCES
