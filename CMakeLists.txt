@@ -15,6 +15,7 @@ find_package(Curses REQUIRED)
 set(SOURCES
     src/main.c
     src/buffer.c
+    src/tui.c
 )
 
 set(TEST_SOURCES
