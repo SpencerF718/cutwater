@@ -1,7 +1,8 @@
-#include "buffer.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <string.h>
+#include "buffer.h"
 
 int buffer_init(EditorBuffer *eb, size_t initial_capacity) {
     if (eb == NULL) {

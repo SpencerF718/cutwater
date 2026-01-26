@@ -1,3 +1,5 @@
+#include <ncurses.h>
+#include <stddef.h>
 #include "tui.h"
 
 void render_buffer(EditorBuffer *eb) {
