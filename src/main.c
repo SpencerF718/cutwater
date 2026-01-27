@@ -36,6 +36,7 @@ int main (void) {
         }
     }
 
+    buffer_free(&eb);
     endwin();
     return 0;
 }
