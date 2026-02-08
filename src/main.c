@@ -55,6 +55,14 @@ int main (void) {
                     buffer_move_right(&editor.buffer);
                 }
 
+                if (ch == 'j') {
+                    buffer_move_down(&editor.buffer);
+                }
+
+                if (ch == 'k') {
+                    buffer_move_up(&editor.buffer);
+                }
+
                 break;
             case MODE_INSERT:
                 if (ch == ESCAPE_ASCII_CODE) {
