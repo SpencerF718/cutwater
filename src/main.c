@@ -3,21 +3,25 @@
 #include <stdio.h>
 #include "tui.h"
 #include "buffer.h"
+#include "editor.h"
 
 #define INITIAL_CAPACITY 10
+#define ESCAPE_ASCII_CODE 27
 
 int main (void) {
     setlocale(LC_ALL, "");
 
-    EditorBuffer eb;
-    if (buffer_init(&eb, INITIAL_CAPACITY) != 0) {
+    Editor editor;
+    if (buffer_init(&editor.buffer, INITIAL_CAPACITY) != 0) {
         fprintf(stderr, "Failed to initialize buffer\n");
         return 1;
     }
 
+    editor.mode = MODE_NORMAL;
+
     char *text = "Hello World\n";
     for (int i = 0; text[i] != '\0'; i++) {
-        buffer_insert(&eb, text[i]);
+        buffer_insert(&editor.buffer, text[i]);
     }
 
     initscr();
@@ -25,18 +29,45 @@ int main (void) {
     noecho();
     keypad(stdscr, TRUE);
 
-    while (1) {
+    int running = 1;
+
+    while (running) {
         clear();
-        render_buffer(&eb);
+        render_buffer(&editor.buffer);
         refresh();
         int ch = getch();
 
-        if (ch == 'q') {
-            break;
+        switch (editor.mode) {
+            case MODE_NORMAL:
+                if (ch =='q') {
+                    running = 0;
+                }
+
+                if (ch == 'i') {
+                    editor.mode = MODE_INSERT;
+                }
+
+                if (ch == 'h') {
+                    buffer_move_left(&editor.buffer);
+                }
+
+                if (ch == 'l') {
+                    buffer_move_right(&editor.buffer);
+                }
+
+                break;
+            case MODE_INSERT:
+                if (ch == ESCAPE_ASCII_CODE) {
+                    editor.mode = MODE_NORMAL;
+                } else {
+                    buffer_insert(&editor.buffer, ch);
+                }
+
+                break;
         }
     }
 
-    buffer_free(&eb);
+    buffer_free(&editor.buffer);
     endwin();
     return 0;
 }
