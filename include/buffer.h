@@ -16,6 +16,8 @@ int buffer_insert(EditorBuffer *eb, char c);
 int buffer_delete(EditorBuffer *eb);
 int buffer_move_left(EditorBuffer *eb);
 int buffer_move_right(EditorBuffer *eb);
+int buffer_move_up(EditorBuffer *eb);
+int buffer_move_down(EditorBuffer *eb);
 int buffer_free(EditorBuffer *eb);
 
 #endif

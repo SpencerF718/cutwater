@@ -111,6 +111,97 @@ int buffer_move_right(EditorBuffer *eb) {
     return 0;
 }
 
+int buffer_move_up(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return -1;
+    }
+
+    size_t current_line_start = eb->gap_start;
+
+    while (current_line_start > 0 && eb->data[current_line_start - 1] != '\n') {
+        current_line_start--;
+    }
+
+    size_t target_column = eb->gap_start - current_line_start;
+
+    if (current_line_start == 0) {
+        return -2;
+    }
+
+    size_t previous_line_end = current_line_start - 1;
+    size_t previous_line_start = previous_line_end;
+
+    while (previous_line_start > 0 && eb->data[previous_line_start - 1] != '\n') {
+        previous_line_start--;
+    }
+
+    size_t previous_line_length = previous_line_end - previous_line_start;
+    size_t clamped_column = target_column;
+
+    if (clamped_column > previous_line_length) {
+        clamped_column = previous_line_length;
+    }
+
+    size_t target_position = previous_line_start + clamped_column;
+    size_t move_size = eb->gap_start - target_position;
+
+    if (move_size > 0) {
+        memmove(eb->data + eb->gap_end - move_size, eb->data + target_position, move_size);
+        eb->gap_start -= move_size;
+        eb->gap_end -= move_size;
+    }
+
+    return 0;
+}
+
+int buffer_move_down(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return -1;
+    }
+
+    size_t current_line_start = eb->gap_start;
+
+    while (current_line_start > 0 && eb->data[current_line_start - 1] != '\n') {
+        current_line_start--;
+    }
+
+    size_t target_column = eb->gap_start - current_line_start;
+    size_t scan_position = eb->gap_end;
+
+    while (scan_position < eb->capacity && eb->data[scan_position] != '\n') {
+        scan_position++;
+    }
+
+    if (scan_position == eb->capacity) {
+        return -2;
+    }
+
+    size_t next_line_start = scan_position + 1;
+    size_t next_line_end = next_line_start;
+
+    while (next_line_end < eb->capacity && eb->data[next_line_end] != '\n') {
+        next_line_end++;
+    }
+
+    size_t next_line_length = next_line_end - next_line_start;
+    size_t clamped_column = target_column;
+
+    if (clamped_column > next_line_length) {
+        clamped_column = next_line_length;
+    }
+
+    size_t target_position = next_line_start + clamped_column;
+    size_t move_size = target_position - eb->gap_end;
+
+    if (move_size > 0) {
+        memmove(eb->data + eb->gap_start, eb->data + eb->gap_end, move_size);
+        eb->gap_start += move_size;
+        eb->gap_end += move_size;
+    }
+
+    return 0;
+}
+
 int buffer_free(EditorBuffer *eb) {
     if (eb == NULL) {
         return -1;
