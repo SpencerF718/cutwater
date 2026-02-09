@@ -3,7 +3,7 @@
 #include "tui.h"
 
 void render_buffer(EditorBuffer *eb) {
-    int cursor_y = 0, cursor_x = 0, y = 0, x = 0;
+    int cursor_y = -1, cursor_x = -1, y = 0, x = 0;
 
     for (size_t i = 0; i < eb->capacity; i++) {
         if (i == eb->gap_start) {
@@ -22,6 +22,12 @@ void render_buffer(EditorBuffer *eb) {
             }
        }
     }
+
+    if (cursor_y == -1) {
+        cursor_y = y;
+        cursor_x = x;
+    }
+
     move(cursor_y, cursor_x);
 }
 
