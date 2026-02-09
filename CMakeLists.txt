@@ -16,6 +16,7 @@ set(SOURCES
     src/main.c
     src/buffer.c
     src/tui.c
+    src/editor.c
 )
 
 set(TEST_SOURCES
