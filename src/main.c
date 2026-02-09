@@ -21,7 +21,13 @@ int main (void) {
 
     char *text = "Hello World\n";
     for (int i = 0; text[i] != '\0'; i++) {
-        buffer_insert(&editor.buffer, text[i]);
+        int result = buffer_insert(&editor.buffer, text[i]);
+
+        if (result != 0) {
+            fprintf(stderr, "Failed to insert character '%c'. ERROR: %d\n", text[i], result);
+            buffer_free(&editor.buffer);
+            return 1;
+        }
     }
 
     initscr();
