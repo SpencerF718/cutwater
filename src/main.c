@@ -7,7 +7,6 @@
 
 #define INITIAL_CAPACITY 10
 #define ESCAPE_DELAY_TIME 20
-#define ESCAPE_ASCII_CODE 27
 
 int main (void) {
     setlocale(LC_ALL, "");
@@ -37,9 +36,9 @@ int main (void) {
     noecho();
     keypad(stdscr, TRUE);
 
-    int running = 1;
+    editor.is_running = 1;
 
-    while (running) {
+    while (editor.is_running) {
         clear();
         render_buffer(&editor.buffer);
         refresh();
@@ -47,38 +46,10 @@ int main (void) {
 
         switch (editor.mode) {
             case MODE_NORMAL:
-                if (ch =='q') {
-                    running = 0;
-                }
-
-                if (ch == 'i') {
-                    editor.mode = MODE_INSERT;
-                }
-
-                if (ch == 'h') {
-                    buffer_move_left(&editor.buffer);
-                }
-
-                if (ch == 'l') {
-                    buffer_move_right(&editor.buffer);
-                }
-
-                if (ch == 'j') {
-                    buffer_move_down(&editor.buffer);
-                }
-
-                if (ch == 'k') {
-                    buffer_move_up(&editor.buffer);
-                }
-
+                process_normal_mode(&editor, ch);
                 break;
             case MODE_INSERT:
-                if (ch == ESCAPE_ASCII_CODE) {
-                    editor.mode = MODE_NORMAL;
-                } else {
-                    buffer_insert(&editor.buffer, ch);
-                }
-
+                process_insert_mode(&editor, ch);
                 break;
         }
     }
