@@ -6,6 +6,7 @@
 #include "editor.h"
 
 #define INITIAL_CAPACITY 10
+#define ESCAPE_DELAY_TIME 20
 #define ESCAPE_ASCII_CODE 27
 
 int main (void) {
@@ -31,6 +32,7 @@ int main (void) {
     }
 
     initscr();
+    set_escdelay(ESCAPE_DELAY_TIME);
     raw();
     noecho();
     keypad(stdscr, TRUE);
