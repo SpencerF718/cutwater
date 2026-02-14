@@ -13,19 +13,23 @@ void process_normal_mode(Editor *editor, int ch) {
     }
 
     if (ch == 'h') {
-        buffer_move_left(&editor->buffer);
+        if (buffer_move_left(&editor->buffer) == 0) {
+            editor->preferred_column = buffer_get_column(&editor->buffer);
+        }
     }
 
     if (ch == 'l') {
-        buffer_move_right(&editor->buffer);
+        if (buffer_move_right(&editor->buffer) == 0) {
+            editor->preferred_column = buffer_get_column(&editor->buffer);
+        }
     }
 
     if (ch == 'j') {
-        buffer_move_down(&editor->buffer);
+        buffer_move_down(&editor->buffer, editor->preferred_column);
     }
 
     if (ch == 'k') {
-        buffer_move_up(&editor->buffer);
+        buffer_move_up(&editor->buffer, editor->preferred_column);
     }
 }
 
@@ -34,5 +38,6 @@ void process_insert_mode(Editor *editor, int ch) {
         editor->mode = MODE_NORMAL;
     } else {
         buffer_insert(&editor->buffer, ch);
+        editor->preferred_column = buffer_get_column(&editor->buffer);
     }
 }

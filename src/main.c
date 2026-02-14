@@ -18,17 +18,7 @@ int main (void) {
     }
 
     editor.mode = MODE_NORMAL;
-
-    char *text = "Hello World\n";
-    for (int i = 0; text[i] != '\0'; i++) {
-        int result = buffer_insert(&editor.buffer, text[i]);
-
-        if (result != 0) {
-            fprintf(stderr, "Failed to insert character '%c'. ERROR: %d\n", text[i], result);
-            buffer_free(&editor.buffer);
-            return 1;
-        }
-    }
+    editor.preferred_column = 0;
 
     initscr();
     set_escdelay(ESCAPE_DELAY_TIME);

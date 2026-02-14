@@ -77,6 +77,16 @@ int buffer_delete(EditorBuffer *eb) {
     return 0;
 }
 
+size_t buffer_get_column(EditorBuffer *eb) {
+    size_t current_line_start = eb->gap_start;
+
+    while (current_line_start > 0 && eb->data[current_line_start - 1] != '\n') {
+        current_line_start--;
+    }
+
+    return eb->gap_start - current_line_start;
+}
+
 int buffer_move_left(EditorBuffer *eb) {
     if (eb == NULL) {
         return -1;
@@ -111,7 +121,7 @@ int buffer_move_right(EditorBuffer *eb) {
     return 0;
 }
 
-int buffer_move_up(EditorBuffer *eb) {
+int buffer_move_up(EditorBuffer *eb, size_t preferred_column) {
     if (eb == NULL) {
         return -1;
     }
@@ -121,8 +131,6 @@ int buffer_move_up(EditorBuffer *eb) {
     while (current_line_start > 0 && eb->data[current_line_start - 1] != '\n') {
         current_line_start--;
     }
-
-    size_t target_column = eb->gap_start - current_line_start;
 
     if (current_line_start == 0) {
         return -2;
@@ -136,7 +144,7 @@ int buffer_move_up(EditorBuffer *eb) {
     }
 
     size_t previous_line_length = previous_line_end - previous_line_start;
-    size_t clamped_column = target_column;
+    size_t clamped_column = preferred_column;
 
     if (clamped_column > previous_line_length) {
         clamped_column = previous_line_length;
@@ -154,18 +162,11 @@ int buffer_move_up(EditorBuffer *eb) {
     return 0;
 }
 
-int buffer_move_down(EditorBuffer *eb) {
+int buffer_move_down(EditorBuffer *eb, size_t preferred_column) {
     if (eb == NULL) {
         return -1;
     }
 
-    size_t current_line_start = eb->gap_start;
-
-    while (current_line_start > 0 && eb->data[current_line_start - 1] != '\n') {
-        current_line_start--;
-    }
-
-    size_t target_column = eb->gap_start - current_line_start;
     size_t scan_position = eb->gap_end;
 
     while (scan_position < eb->capacity && eb->data[scan_position] != '\n') {
@@ -184,7 +185,7 @@ int buffer_move_down(EditorBuffer *eb) {
     }
 
     size_t next_line_length = next_line_end - next_line_start;
-    size_t clamped_column = target_column;
+    size_t clamped_column = preferred_column;
 
     if (clamped_column > next_line_length) {
         clamped_column = next_line_length;

@@ -12,6 +12,7 @@ typedef struct Editor {
     EditorBuffer buffer;
     EditorMode mode;
     int is_running;
+    size_t preferred_column;
 } Editor;
 
 void process_normal_mode(Editor *editor, int ch);
