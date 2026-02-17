@@ -91,6 +91,30 @@ void test_buffer_delete(void) {
     printf("PASSED: buffer_delete\n");
 }
 
+void test_buffer_get_column(void) {
+    printf("TESTING: buffer_get_column\n");
+
+    EditorBuffer eb;
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    assert(buffer_get_column(&eb) == 0);
+
+    buffer_insert(&eb, TEST_CHAR_1);
+    assert(buffer_get_column(&eb) == 1);
+
+    buffer_insert(&eb, TEST_CHAR_2);
+    assert(buffer_get_column(&eb) == 2);
+
+    buffer_insert(&eb, '\n');
+    assert(buffer_get_column(&eb) == 0);
+
+    buffer_insert(&eb, TEST_CHAR_3);
+    assert(buffer_get_column(&eb) == 1);
+
+    buffer_free(&eb);
+    printf("PASSED: buffer_get_column\n");
+}
+
 void test_buffer_move_left(void) {
     printf("TESTING: buffer_move_left\n");
 
@@ -142,13 +166,75 @@ void test_buffer_move_right(void) {
     printf("PASSED: buffer_move_right\n");
 }
 
+void test_buffer_move_up(void) {
+    printf("TESTING: buffer_move_up\n");
+
+    EditorBuffer eb;
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    buffer_insert(&eb, TEST_CHAR_1);
+    buffer_insert(&eb, TEST_CHAR_2);
+    buffer_insert(&eb, '\n');
+    buffer_insert(&eb, TEST_CHAR_3);
+    buffer_insert(&eb, 'D');
+
+    assert(buffer_get_column(&eb) == 2);
+
+    int result = buffer_move_up(&eb, 1);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 1);
+    assert(buffer_get_column(&eb) == 1);
+
+    while (eb.gap_end < eb.capacity) buffer_move_right(&eb);
+
+    result = buffer_move_up(&eb, 5);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 2); 
+    assert(buffer_get_column(&eb) == 2);
+
+    while (eb.gap_start > 0) buffer_move_left(&eb);
+    result = buffer_move_up(&eb, 0);
+    assert(result != BUFFER_SUCCESS);
+
+    buffer_free(&eb);
+    printf("PASSED: buffer_move_up\n");
+}
+
+void test_buffer_move_down(void) {
+    printf("TESTING: buffer_move_down\n");
+
+    EditorBuffer eb;
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    buffer_insert(&eb, TEST_CHAR_1);
+    buffer_insert(&eb, '\n');
+    buffer_insert(&eb, TEST_CHAR_2);
+    buffer_insert(&eb, TEST_CHAR_3);
+
+    while (eb.gap_start > 0) buffer_move_left(&eb);
+
+    int result = buffer_move_down(&eb, 1);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 3);
+    assert(buffer_get_column(&eb) == 1);
+
+    result = buffer_move_down(&eb, 0);
+    assert(result != BUFFER_SUCCESS);
+
+    buffer_free(&eb);
+    printf("PASSED: buffer_move_down\n");
+}
+
 int main(void) {
     test_buffer_init();
     test_buffer_grow();
     test_buffer_insert();
     test_buffer_delete();
+    test_buffer_get_column();
     test_buffer_move_left();
     test_buffer_move_right();
+    test_buffer_move_up();
+    test_buffer_move_down();
 
     printf("--- ALL TESTS PASSED ---\n");
 
