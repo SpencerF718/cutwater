@@ -27,7 +27,13 @@ int buffer_grow(EditorBuffer *eb) {
         return -1;
     }
 
-    size_t new_capacity = eb->capacity * 2;
+    size_t new_capacity;
+    if (eb->capacity == 0) {
+        new_capacity = 10;
+    } else {
+        new_capacity = eb->capacity * 2;
+    }
+
     char *new_data = realloc(eb->data, new_capacity * sizeof(char));
 
     if (new_data == NULL) {
