@@ -102,6 +102,10 @@ int buffer_move_left(EditorBuffer *eb) {
         return -2;
     }
 
+    if (eb->data[eb->gap_start - 1] == '\n') {
+        return -3;
+    }
+
     eb->data[eb->gap_end - 1] = eb->data[eb->gap_start - 1];
 
     eb->gap_start--;
@@ -117,6 +121,10 @@ int buffer_move_right(EditorBuffer *eb) {
 
     if (eb->gap_end == eb->capacity) {
         return -2;
+    }
+
+    if (eb->data[eb->gap_end] == '\n') {
+        return -3;
     }
 
     eb->data[eb->gap_start] = eb->data[eb->gap_end];
