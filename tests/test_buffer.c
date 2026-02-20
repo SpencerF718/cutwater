@@ -120,6 +120,10 @@ void test_buffer_move_left(void) {
 
     EditorBuffer eb;
     buffer_init(&eb, INITIAL_CAPACITY);
+
+    int bounds_result = buffer_move_left(&eb);
+    assert(bounds_result == -2);
+
     buffer_insert(&eb, TEST_CHAR_1);
     buffer_insert(&eb, TEST_CHAR_2);
 
@@ -132,10 +136,21 @@ void test_buffer_move_left(void) {
     assert(eb.capacity == INITIAL_CAPACITY);
     assert(eb.gap_start == expected_gap_start);
     assert(eb.gap_end == expected_gap_end);
-
     assert(eb.data[0] == TEST_CHAR_1);
     assert(eb.data[expected_gap_end] == TEST_CHAR_2);
     assert(eb.data != NULL);
+
+    buffer_free(&eb);
+    buffer_init(&eb, INITIAL_CAPACITY);
+    buffer_insert(&eb, TEST_CHAR_1);
+    buffer_insert(&eb, '\n');
+    buffer_insert(&eb, TEST_CHAR_2);
+
+    int move_over_char_result = buffer_move_left(&eb);
+    assert(move_over_char_result == BUFFER_SUCCESS);
+
+    int move_over_newline_result = buffer_move_left(&eb);
+    assert(move_over_newline_result == -3);
 
     buffer_free(&eb);
     printf("PASSED: buffer_move_left\n");
@@ -146,6 +161,10 @@ void test_buffer_move_right(void) {
 
     EditorBuffer eb;
     buffer_init(&eb, INITIAL_CAPACITY);
+
+    int bounds_result = buffer_move_right(&eb);
+    assert(bounds_result == -2);
+
     buffer_insert(&eb, TEST_CHAR_1);
     buffer_insert(&eb, TEST_CHAR_2);
     buffer_move_left(&eb);
@@ -161,6 +180,17 @@ void test_buffer_move_right(void) {
     assert(eb.data[0] == TEST_CHAR_1);
     assert(eb.data[1] == TEST_CHAR_2);
     assert(eb.data != NULL);
+
+    buffer_free(&eb);
+    buffer_init(&eb, INITIAL_CAPACITY);
+    buffer_insert(&eb, TEST_CHAR_1);
+    buffer_insert(&eb, '\n');
+    buffer_insert(&eb, TEST_CHAR_2);
+    buffer_move_left(&eb);
+    buffer_move_up(&eb, 1);
+
+    int move_over_newline_result = buffer_move_right(&eb);
+    assert(move_over_newline_result == -3);
 
     buffer_free(&eb);
     printf("PASSED: buffer_move_right\n");
@@ -185,14 +215,17 @@ void test_buffer_move_up(void) {
     assert(eb.gap_start == 1);
     assert(buffer_get_column(&eb) == 1);
 
-    while (eb.gap_end < eb.capacity) buffer_move_right(&eb);
+    buffer_move_down(&eb, 5);
+    while (buffer_move_right(&eb) == BUFFER_SUCCESS);
 
     result = buffer_move_up(&eb, 5);
     assert(result == BUFFER_SUCCESS);
     assert(eb.gap_start == 2); 
     assert(buffer_get_column(&eb) == 2);
 
-    while (eb.gap_start > 0) buffer_move_left(&eb);
+    buffer_move_up(&eb, 0);
+    while (buffer_move_left(&eb) == BUFFER_SUCCESS);
+
     result = buffer_move_up(&eb, 0);
     assert(result != BUFFER_SUCCESS);
 
@@ -211,7 +244,8 @@ void test_buffer_move_down(void) {
     buffer_insert(&eb, TEST_CHAR_2);
     buffer_insert(&eb, TEST_CHAR_3);
 
-    while (eb.gap_start > 0) buffer_move_left(&eb);
+    buffer_move_up(&eb, 0);
+    while (buffer_move_left(&eb) == BUFFER_SUCCESS);
 
     int result = buffer_move_down(&eb, 1);
     assert(result == BUFFER_SUCCESS);
