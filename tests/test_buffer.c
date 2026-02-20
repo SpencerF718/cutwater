@@ -97,19 +97,24 @@ void test_buffer_get_column(void) {
     EditorBuffer eb;
     buffer_init(&eb, INITIAL_CAPACITY);
 
-    assert(buffer_get_column(&eb) == 0);
+    size_t col = buffer_get_column(&eb);
+    assert(col == 0);
 
     buffer_insert(&eb, TEST_CHAR_1);
-    assert(buffer_get_column(&eb) == 1);
+    col = buffer_get_column(&eb);
+    assert(col == 1);
 
     buffer_insert(&eb, TEST_CHAR_2);
-    assert(buffer_get_column(&eb) == 2);
+    col = buffer_get_column(&eb);
+    assert(col == 2);
 
     buffer_insert(&eb, '\n');
-    assert(buffer_get_column(&eb) == 0);
+    col = buffer_get_column(&eb);
+    assert(col == 0);
 
     buffer_insert(&eb, TEST_CHAR_3);
-    assert(buffer_get_column(&eb) == 1);
+    col = buffer_get_column(&eb);
+    assert(col == 1);
 
     buffer_free(&eb);
     printf("PASSED: buffer_get_column\n");
@@ -208,12 +213,15 @@ void test_buffer_move_up(void) {
     buffer_insert(&eb, TEST_CHAR_3);
     buffer_insert(&eb, 'D');
 
-    assert(buffer_get_column(&eb) == 2);
+    size_t col = buffer_get_column(&eb);
+    assert(col == 2);
 
     int result = buffer_move_up(&eb, 1);
     assert(result == BUFFER_SUCCESS);
     assert(eb.gap_start == 1);
-    assert(buffer_get_column(&eb) == 1);
+
+    col = buffer_get_column(&eb);
+    assert(col == 1);
 
     buffer_move_down(&eb, 5);
     while (buffer_move_right(&eb) == BUFFER_SUCCESS);
@@ -221,7 +229,9 @@ void test_buffer_move_up(void) {
     result = buffer_move_up(&eb, 5);
     assert(result == BUFFER_SUCCESS);
     assert(eb.gap_start == 2); 
-    assert(buffer_get_column(&eb) == 2);
+
+    col = buffer_get_column(&eb);
+    assert(col == 2);
 
     buffer_move_up(&eb, 0);
     while (buffer_move_left(&eb) == BUFFER_SUCCESS);
@@ -250,7 +260,9 @@ void test_buffer_move_down(void) {
     int result = buffer_move_down(&eb, 1);
     assert(result == BUFFER_SUCCESS);
     assert(eb.gap_start == 3);
-    assert(buffer_get_column(&eb) == 1);
+
+    size_t col = buffer_get_column(&eb);
+    assert(col == 1);
 
     result = buffer_move_down(&eb, 0);
     assert(result != BUFFER_SUCCESS);
