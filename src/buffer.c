@@ -4,6 +4,8 @@
 #include <string.h>
 #include "buffer.h"
 
+static int buffer_grow(EditorBuffer *eb);
+
 int buffer_init(EditorBuffer *eb, size_t initial_capacity) {
     if (eb == NULL) {
         return -1;
@@ -22,7 +24,7 @@ int buffer_init(EditorBuffer *eb, size_t initial_capacity) {
     return 0;
 }
 
-int buffer_grow(EditorBuffer *eb) {
+static int buffer_grow(EditorBuffer *eb) {
     if (eb == NULL) {
         return -1;
     }
