@@ -58,6 +58,7 @@ static int buffer_move_gap(EditorBuffer *eb, size_t target_position) {
     if (eb == NULL) {
         return -1;
     }
+
     if (target_position < eb->gap_start) {
         size_t move_size = eb->gap_start - target_position;
         memmove(eb->data + eb->gap_end - move_size, eb->data + target_position, move_size);
@@ -221,6 +222,34 @@ int buffer_move_down(EditorBuffer *eb, size_t preferred_column) {
     }
 
     size_t target_position = next_line_start + clamped_column;
+    return buffer_move_gap(eb, target_position);
+}
+
+int buffer_move_line_start(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return -1;
+    }
+
+    size_t target_position = eb->gap_start;
+
+    while (target_position > 0 && eb->data[target_position - 1] != '\n') {
+        target_position--;
+    }
+
+    return buffer_move_gap(eb, target_position);
+}
+
+int buffer_move_line_end(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return -1;
+    }
+
+    size_t target_position = eb->gap_end;
+
+    while (target_position < eb->capacity && eb->data[target_position] != '\n') {
+        target_position++;
+    }
+
     return buffer_move_gap(eb, target_position);
 }
 

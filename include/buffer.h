@@ -18,6 +18,8 @@ int buffer_move_left(EditorBuffer *eb);
 int buffer_move_right(EditorBuffer *eb);
 int buffer_move_up(EditorBuffer *eb, size_t preferred_column);
 int buffer_move_down(EditorBuffer *eb, size_t preferred_column);
+int buffer_move_line_start(EditorBuffer *eb);
+int buffer_move_line_end(EditorBuffer *eb);
 int buffer_free(EditorBuffer *eb);
 
 #endif

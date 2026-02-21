@@ -31,6 +31,21 @@ void process_normal_mode(Editor *editor, int ch) {
     if (ch == 'k') {
         buffer_move_up(&editor->buffer, editor->preferred_column);
     }
+
+    if (ch == '0') {
+        buffer_move_line_start(&editor->buffer);
+        editor->preferred_column = buffer_get_column(&editor->buffer);
+    }
+
+    if (ch == '$') {
+        buffer_move_line_end(&editor->buffer);
+
+        if (editor->buffer.gap_start > 0 && editor->buffer.data[editor->buffer.gap_start - 1] != '\n') {
+            buffer_move_left(&editor->buffer);
+        }
+
+        editor->preferred_column = buffer_get_column(&editor->buffer);
+    }
 }
 
 void process_insert_mode(Editor *editor, int ch) {
