@@ -5,6 +5,7 @@
 #include "buffer.h"
 
 static int buffer_grow(EditorBuffer *eb);
+static int buffer_move_gap(EditorBuffer *eb, size_t target_position);
 
 int buffer_init(EditorBuffer *eb, size_t initial_capacity) {
     if (eb == NULL) {
@@ -49,6 +50,26 @@ static int buffer_grow(EditorBuffer *eb) {
 
     eb->gap_end = new_gap_end;
     eb->capacity = new_capacity;
+
+    return 0;
+}
+
+static int buffer_move_gap(EditorBuffer *eb, size_t target_position) {
+    if (eb == NULL) {
+        return -1;
+    }
+    if (target_position < eb->gap_start) {
+        size_t move_size = eb->gap_start - target_position;
+        memmove(eb->data + eb->gap_end - move_size, eb->data + target_position, move_size);
+        eb->gap_start -= move_size;
+        eb->gap_end -= move_size;
+
+    } else if (target_position > eb->gap_end) {
+        size_t move_size = target_position - eb->gap_end;
+        memmove(eb->data + eb->gap_start, eb->data + eb->gap_end, move_size);
+        eb->gap_start += move_size;
+        eb->gap_end += move_size;
+    }
 
     return 0;
 }
@@ -167,15 +188,7 @@ int buffer_move_up(EditorBuffer *eb, size_t preferred_column) {
     }
 
     size_t target_position = previous_line_start + clamped_column;
-    size_t move_size = eb->gap_start - target_position;
-
-    if (move_size > 0) {
-        memmove(eb->data + eb->gap_end - move_size, eb->data + target_position, move_size);
-        eb->gap_start -= move_size;
-        eb->gap_end -= move_size;
-    }
-
-    return 0;
+    return buffer_move_gap(eb, target_position);
 }
 
 int buffer_move_down(EditorBuffer *eb, size_t preferred_column) {
@@ -208,15 +221,7 @@ int buffer_move_down(EditorBuffer *eb, size_t preferred_column) {
     }
 
     size_t target_position = next_line_start + clamped_column;
-    size_t move_size = target_position - eb->gap_end;
-
-    if (move_size > 0) {
-        memmove(eb->data + eb->gap_start, eb->data + eb->gap_end, move_size);
-        eb->gap_start += move_size;
-        eb->gap_end += move_size;
-    }
-
-    return 0;
+    return buffer_move_gap(eb, target_position);
 }
 
 int buffer_free(EditorBuffer *eb) {
