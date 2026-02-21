@@ -4,30 +4,30 @@
 #include <string.h>
 #include "buffer.h"
 
-static int buffer_grow(EditorBuffer *eb);
-static int buffer_move_gap(EditorBuffer *eb, size_t target_position);
+static BufferStatus buffer_grow(EditorBuffer *eb);
+static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position);
 
-int buffer_init(EditorBuffer *eb, size_t initial_capacity) {
+BufferStatus buffer_init(EditorBuffer *eb, size_t initial_capacity) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     eb->data = malloc(initial_capacity * sizeof(char));
 
     if (eb->data == NULL) {
-        return -2;
+        return BUFFER_ERR_ALLOCATION_FAILED;
     }
 
     eb->gap_start = 0;
     eb->gap_end = initial_capacity;
     eb->capacity = initial_capacity;
 
-    return 0;
+    return BUFFER_SUCCESS;
 }
 
-static int buffer_grow(EditorBuffer *eb) {
+static BufferStatus buffer_grow(EditorBuffer *eb) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     size_t new_capacity;
@@ -40,7 +40,7 @@ static int buffer_grow(EditorBuffer *eb) {
     char *new_data = realloc(eb->data, new_capacity * sizeof(char));
 
     if (new_data == NULL) {
-        return -2;
+        return BUFFER_ERR_ALLOCATION_FAILED;
     }
 
     eb->data = new_data;
@@ -51,12 +51,12 @@ static int buffer_grow(EditorBuffer *eb) {
     eb->gap_end = new_gap_end;
     eb->capacity = new_capacity;
 
-    return 0;
+    return BUFFER_SUCCESS;
 }
 
-static int buffer_move_gap(EditorBuffer *eb, size_t target_position) {
+static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     if (target_position < eb->gap_start) {
@@ -72,39 +72,39 @@ static int buffer_move_gap(EditorBuffer *eb, size_t target_position) {
         eb->gap_end += move_size;
     }
 
-    return 0;
+    return BUFFER_SUCCESS;
 }
 
-int buffer_insert(EditorBuffer *eb, char c) {
+BufferStatus buffer_insert(EditorBuffer *eb, char c) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     if (eb->gap_start >= eb->gap_end) {
-        int grow_result = buffer_grow(eb);
-        if (grow_result == -1) {
-            return -2;
+        BufferStatus grow_result = buffer_grow(eb);
+        if (grow_result != BUFFER_SUCCESS) {
+            return grow_result;
         }
     }
 
     eb->data[eb->gap_start] = c;
     eb->gap_start++;
 
-    return 0;
+    return BUFFER_SUCCESS;
 }
 
-int buffer_delete(EditorBuffer *eb) {
+BufferStatus buffer_delete(EditorBuffer *eb) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     if (eb->gap_start == 0) {
-        return -2;
+        return BUFFER_ERR_START_OF_BUFFER;
     }
 
     eb->gap_start--;
 
-    return 0;
+    return BUFFER_SUCCESS;
 }
 
 size_t buffer_get_column(EditorBuffer *eb) {
@@ -117,17 +117,17 @@ size_t buffer_get_column(EditorBuffer *eb) {
     return eb->gap_start - current_line_start;
 }
 
-int buffer_move_left(EditorBuffer *eb) {
+BufferStatus buffer_move_left(EditorBuffer *eb) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     if (eb->gap_start == 0) {
-        return -2;
+        return BUFFER_ERR_START_OF_BUFFER;
     }
 
     if (eb->data[eb->gap_start - 1] == '\n') {
-        return -3;
+        return BUFFER_ERR_START_OF_LINE;
     }
 
     eb->data[eb->gap_end - 1] = eb->data[eb->gap_start - 1];
@@ -135,20 +135,20 @@ int buffer_move_left(EditorBuffer *eb) {
     eb->gap_start--;
     eb->gap_end--;
 
-    return 0;
+    return BUFFER_SUCCESS;
 }
 
-int buffer_move_right(EditorBuffer *eb) {
+BufferStatus buffer_move_right(EditorBuffer *eb) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     if (eb->gap_end == eb->capacity) {
-        return -2;
+        return BUFFER_ERR_END_OF_BUFFER;
     }
 
     if (eb->data[eb->gap_end] == '\n') {
-        return -3;
+        return BUFFER_ERR_END_OF_LINE;
     }
 
     eb->data[eb->gap_start] = eb->data[eb->gap_end];
@@ -156,12 +156,12 @@ int buffer_move_right(EditorBuffer *eb) {
     eb->gap_start++;
     eb->gap_end++;
 
-    return 0;
+    return BUFFER_SUCCESS;
 }
 
-int buffer_move_up(EditorBuffer *eb, size_t preferred_column) {
+BufferStatus buffer_move_up(EditorBuffer *eb, size_t preferred_column) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     size_t current_line_start = eb->gap_start;
@@ -171,7 +171,7 @@ int buffer_move_up(EditorBuffer *eb, size_t preferred_column) {
     }
 
     if (current_line_start == 0) {
-        return -2;
+        return BUFFER_ERR_FIRST_LINE;
     }
 
     size_t previous_line_end = current_line_start - 1;
@@ -192,9 +192,9 @@ int buffer_move_up(EditorBuffer *eb, size_t preferred_column) {
     return buffer_move_gap(eb, target_position);
 }
 
-int buffer_move_down(EditorBuffer *eb, size_t preferred_column) {
+BufferStatus buffer_move_down(EditorBuffer *eb, size_t preferred_column) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     size_t scan_position = eb->gap_end;
@@ -204,7 +204,7 @@ int buffer_move_down(EditorBuffer *eb, size_t preferred_column) {
     }
 
     if (scan_position == eb->capacity) {
-        return -2;
+        return BUFFER_ERR_LAST_LINE;
     }
 
     size_t next_line_start = scan_position + 1;
@@ -225,9 +225,9 @@ int buffer_move_down(EditorBuffer *eb, size_t preferred_column) {
     return buffer_move_gap(eb, target_position);
 }
 
-int buffer_move_line_start(EditorBuffer *eb) {
+BufferStatus buffer_move_line_start(EditorBuffer *eb) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     size_t target_position = eb->gap_start;
@@ -239,9 +239,9 @@ int buffer_move_line_start(EditorBuffer *eb) {
     return buffer_move_gap(eb, target_position);
 }
 
-int buffer_move_line_end(EditorBuffer *eb) {
+BufferStatus buffer_move_line_end(EditorBuffer *eb) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     size_t target_position = eb->gap_end;
@@ -253,9 +253,9 @@ int buffer_move_line_end(EditorBuffer *eb) {
     return buffer_move_gap(eb, target_position);
 }
 
-int buffer_free(EditorBuffer *eb) {
+BufferStatus buffer_free(EditorBuffer *eb) {
     if (eb == NULL) {
-        return -1;
+        return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
     free(eb->data);
@@ -263,5 +263,5 @@ int buffer_free(EditorBuffer *eb) {
     eb->data = NULL;
     eb->capacity = 0;
 
-    return 0;
+    return BUFFER_SUCCESS;
 }
