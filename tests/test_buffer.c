@@ -11,6 +11,9 @@
 #define TEST_CHAR_1 'A'
 #define TEST_CHAR_2 'B'
 #define TEST_CHAR_3 'C'
+#define TEST_CHAR_4 'D'
+#define TEST_CHAR_5 'E'
+#define TEST_CHAR_6 'F'
 
 void test_buffer_init(void) {
     printf("TESTING: buffer_init\n");
@@ -271,6 +274,56 @@ void test_buffer_move_down(void) {
     printf("PASSED: buffer_move_down\n");
 }
 
+void test_buffer_move_line_start(void) {
+    printf("TESTING: buffer_move_line_start\n");
+
+    EditorBuffer eb;
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    buffer_insert(&eb, TEST_CHAR_1);
+    buffer_insert(&eb, TEST_CHAR_2);
+    buffer_insert(&eb, TEST_CHAR_3);
+    buffer_insert(&eb, '\n');
+    buffer_insert(&eb, TEST_CHAR_4);
+    buffer_insert(&eb, TEST_CHAR_5);
+    buffer_insert(&eb, TEST_CHAR_6);
+
+    int result = buffer_move_line_start(&eb);
+
+    assert(result == 0);
+    assert(eb.gap_start == 4);
+    assert(eb.data[eb.gap_end] == TEST_CHAR_4);
+
+    buffer_free(&eb);
+    printf("PASSED: buffer_move_line_start\n");
+}
+
+void test_buffer_move_line_end(void) {
+    printf("TESTING: buffer_move_line_end\n");
+
+    EditorBuffer eb;
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    buffer_insert(&eb, TEST_CHAR_1);
+    buffer_insert(&eb, TEST_CHAR_2);
+    buffer_insert(&eb, TEST_CHAR_3);
+    buffer_insert(&eb, '\n');
+    buffer_insert(&eb, TEST_CHAR_4);
+    buffer_insert(&eb, TEST_CHAR_5);
+    buffer_insert(&eb, TEST_CHAR_6);
+
+    buffer_move_line_start(&eb);
+
+    int result = buffer_move_line_end(&eb);
+
+    assert(result == 0);
+    assert(eb.gap_start == 7);
+
+    buffer_free(&eb);
+    printf("PASSED: buffer_move_line_end\n");
+}
+
+
 int main(void) {
     test_buffer_init();
     test_buffer_grow();
@@ -281,6 +334,8 @@ int main(void) {
     test_buffer_move_right();
     test_buffer_move_up();
     test_buffer_move_down();
+    test_buffer_move_line_start();
+    test_buffer_move_line_end();
 
     printf("--- ALL TESTS PASSED ---\n");
 
