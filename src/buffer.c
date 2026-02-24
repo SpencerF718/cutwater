@@ -2,10 +2,14 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
+#include <ctype.h>
 #include "buffer.h"
 
 static BufferStatus buffer_grow(EditorBuffer *eb);
 static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position);
+static int buffer_is_keyword(char c);
+static int buffer_is_space(char c);
+static int buffer_is_punctuation(char c);
 
 BufferStatus buffer_init(EditorBuffer *eb, size_t initial_capacity) {
     if (eb == NULL) {
@@ -73,6 +77,18 @@ static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position) {
     }
 
     return BUFFER_SUCCESS;
+}
+
+static int buffer_is_keyword(char c) {
+    return isalnum(c) || c == '_';
+}
+
+static int buffer_is_space(char c) {
+    return isspace(c);
+}
+
+static int buffer_is_punctuation(char c) {
+    return !buffer_is_keyword(c) && !buffer_is_space(c);
 }
 
 BufferStatus buffer_insert(EditorBuffer *eb, char c) {
@@ -247,6 +263,36 @@ BufferStatus buffer_move_line_end(EditorBuffer *eb) {
     size_t target_position = eb->gap_end;
 
     while (target_position < eb->capacity && eb->data[target_position] != '\n') {
+        target_position++;
+    }
+
+    return buffer_move_gap(eb, target_position);
+}
+
+BufferStatus buffer_move_next_word(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return BUFFER_ERR_INVALID_ARGUMENT;
+    }
+
+    size_t target_position = eb->gap_end;
+
+    if (target_position >= eb->capacity) {
+        return BUFFER_SUCCESS;
+    }
+
+    char current_char = eb->data[target_position];
+
+    if (buffer_is_keyword(current_char)) {
+        while (target_position < eb->capacity && buffer_is_keyword(eb->data[target_position])) {
+            target_position++;
+        }
+    } else if (buffer_is_punctuation(current_char)) {
+        while (target_position < eb->capacity && buffer_is_punctuation(eb->data[target_position])) {
+            target_position++;
+        }
+    }
+
+    while (target_position < eb->capacity && buffer_is_space(eb->data[target_position])) {
         target_position++;
     }
 

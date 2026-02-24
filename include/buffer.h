@@ -33,5 +33,6 @@ BufferStatus buffer_move_down(EditorBuffer *eb, size_t preferred_column);
 BufferStatus buffer_move_line_start(EditorBuffer *eb);
 BufferStatus buffer_move_line_end(EditorBuffer *eb);
 BufferStatus buffer_free(EditorBuffer *eb);
+BufferStatus buffer_move_next_word(EditorBuffer *eb);
 
 #endif

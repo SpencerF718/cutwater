@@ -46,6 +46,12 @@ void process_normal_mode(Editor *editor, int ch) {
 
         editor->preferred_column = buffer_get_column(&editor->buffer);
     }
+
+    if (ch == 'w') {
+        if (buffer_move_next_word(&editor->buffer) == 0) {
+            editor->preferred_column = buffer_get_column(&editor->buffer);
+        }
+    }
 }
 
 void process_insert_mode(Editor *editor, int ch) {
