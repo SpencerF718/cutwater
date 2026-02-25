@@ -80,11 +80,11 @@ static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position) {
 }
 
 static int buffer_is_keyword(char c) {
-    return isalnum(c) || c == '_';
+    return isalnum((unsigned char)c) || c == '_';
 }
 
 static int buffer_is_space(char c) {
-    return isspace(c);
+    return isspace((unsigned char)c);
 }
 
 static int buffer_is_punctuation(char c) {
