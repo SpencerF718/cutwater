@@ -40,7 +40,7 @@ static BufferStatus buffer_grow(EditorBuffer *eb) {
     if (eb->capacity <= MIN_CAPACITY) {
         new_capacity = MIN_CAPACITY;
     } else {
-        new_capacity = eb->capacity * 2;
+        new_capacity = eb->capacity << 1;
     }
 
     char *new_data = realloc(eb->data, new_capacity * sizeof(char));
