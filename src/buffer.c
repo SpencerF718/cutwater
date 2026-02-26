@@ -5,6 +5,8 @@
 #include <ctype.h>
 #include "buffer.h"
 
+#define MIN_CAPACITY 1024
+
 static BufferStatus buffer_grow(EditorBuffer *eb);
 static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position);
 static int buffer_is_keyword(char c);
@@ -35,8 +37,8 @@ static BufferStatus buffer_grow(EditorBuffer *eb) {
     }
 
     size_t new_capacity;
-    if (eb->capacity == 0) {
-        new_capacity = 10;
+    if (eb->capacity <= MIN_CAPACITY) {
+        new_capacity = MIN_CAPACITY;
     } else {
         new_capacity = eb->capacity * 2;
     }

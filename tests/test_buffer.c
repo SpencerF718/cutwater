@@ -6,6 +6,7 @@
 
 #define SMALL_CAPACITY 2
 #define GROWTH_FACTOR 2
+#define MIN_CAPACITY 1024
 
 #define TEST_CHAR_1 'A'
 #define TEST_CHAR_2 'B'
@@ -41,7 +42,7 @@ void test_buffer_grow(void) {
     buffer_insert(&eb, TEST_CHAR_2);
     buffer_insert(&eb, TEST_CHAR_3);
 
-    size_t expected_capacity = SMALL_CAPACITY * GROWTH_FACTOR;
+    size_t expected_capacity = MIN_CAPACITY;
     size_t items_inserted = 3;
 
     assert(eb.capacity == expected_capacity);
