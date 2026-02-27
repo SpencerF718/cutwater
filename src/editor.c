@@ -18,9 +18,11 @@ void process_normal_mode(Editor *editor, int ch) {
             break;
 
         case 'h':
+        case KEY_LEFT:
             if (buffer_move_left(&editor->buffer) == 0) sync_column(editor);
             break;
         case 'l':
+        case KEY_RIGHT:
             if (buffer_move_right(&editor->buffer) == 0) sync_column(editor);
             break;
         case '0':
@@ -39,9 +41,11 @@ void process_normal_mode(Editor *editor, int ch) {
             break;
 
         case 'j':
+        case KEY_DOWN:
             buffer_move_down(&editor->buffer, editor->preferred_column);
             break;
         case 'k':
+        case KEY_UP:
             buffer_move_up(&editor->buffer, editor->preferred_column);
             break;
 
