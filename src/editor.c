@@ -4,77 +4,83 @@
 
 #define ESCAPE_ASCII_CODE 27
 
+static void sync_column(Editor *editor) {
+    editor->preferred_column = buffer_get_column(&editor->buffer);
+}
+
 void process_normal_mode(Editor *editor, int ch) {
-    if (ch =='q') {
-        editor->is_running = 0;
-    }
+    switch (ch) {
+        case 'q':
+            editor->is_running = 0;
+            break;
+        case 'i':
+            editor->mode = MODE_INSERT;
+            break;
 
-    if (ch == 'i') {
-        editor->mode = MODE_INSERT;
-    }
+        case 'h':
+            if (buffer_move_left(&editor->buffer) == 0) sync_column(editor);
+            break;
+        case 'l':
+            if (buffer_move_right(&editor->buffer) == 0) sync_column(editor);
+            break;
+        case '0':
+            buffer_move_line_start(&editor->buffer);
+            sync_column(editor);
+            break;
+        case '$':
+            buffer_move_line_end(&editor->buffer);
+            if (editor->buffer.gap_start > 0 && editor->buffer.data[editor->buffer.gap_start - 1] != '\n') {
+                buffer_move_left(&editor->buffer);
+            }
+            sync_column(editor);
+            break;
+        case 'w':
+            if (buffer_move_next_word(&editor->buffer) == 0) sync_column(editor);
+            break;
 
-    if (ch == 'h') {
-        if (buffer_move_left(&editor->buffer) == 0) {
-            editor->preferred_column = buffer_get_column(&editor->buffer);
-        }
-    }
+        case 'j':
+            buffer_move_down(&editor->buffer, editor->preferred_column);
+            break;
+        case 'k':
+            buffer_move_up(&editor->buffer, editor->preferred_column);
+            break;
 
-    if (ch == 'l') {
-        if (buffer_move_right(&editor->buffer) == 0) {
-            editor->preferred_column = buffer_get_column(&editor->buffer);
-        }
-    }
-
-    if (ch == 'j') {
-        buffer_move_down(&editor->buffer, editor->preferred_column);
-    }
-
-    if (ch == 'k') {
-        buffer_move_up(&editor->buffer, editor->preferred_column);
-    }
-
-    if (ch == '0') {
-        buffer_move_line_start(&editor->buffer);
-        editor->preferred_column = buffer_get_column(&editor->buffer);
-    }
-
-    if (ch == '$') {
-        buffer_move_line_end(&editor->buffer);
-
-        if (editor->buffer.gap_start > 0 && editor->buffer.data[editor->buffer.gap_start - 1] != '\n') {
-            buffer_move_left(&editor->buffer);
-        }
-
-        editor->preferred_column = buffer_get_column(&editor->buffer);
-    }
-
-    if (ch == 'w') {
-        if (buffer_move_next_word(&editor->buffer) == 0) {
-            editor->preferred_column = buffer_get_column(&editor->buffer);
-        }
+        default:
+            break;
     }
 }
 
 void process_insert_mode(Editor *editor, int ch) {
-    if (ch == ESCAPE_ASCII_CODE) {
-        editor->mode = MODE_NORMAL;
-    } else if (ch == KEY_BACKSPACE || ch == 127 || ch == '\b') {
-        buffer_delete(&editor->buffer);
-        editor->preferred_column = buffer_get_column(&editor->buffer);
-    } else if (ch == KEY_LEFT) {
-        if (buffer_move_left(&editor->buffer) == 0) {
-            editor->preferred_column = buffer_get_column(&editor->buffer);
-        }
-    } else if (ch == KEY_RIGHT) {
-        if (buffer_move_right(&editor->buffer) == 0) {
-            editor->preferred_column = buffer_get_column(&editor->buffer);
-        }
-    } else if (ch == KEY_UP) {
-        buffer_move_up(&editor->buffer, editor->preferred_column);
-    } else if (ch == KEY_DOWN) {
-        buffer_move_down(&editor->buffer, editor->preferred_column);
-    } else if (ch >= 0 && ch <= 255) {
-        buffer_insert(&editor->buffer, ch);
-        editor->preferred_column = buffer_get_column(&editor->buffer);
+    switch (ch) {
+        case ESCAPE_ASCII_CODE:
+            editor->mode = MODE_NORMAL;
+            break;
+
+        case KEY_BACKSPACE:
+        case 127:
+        case '\b':
+            buffer_delete(&editor->buffer);
+            sync_column(editor);
+            break;
+
+        case KEY_LEFT:
+            if (buffer_move_left(&editor->buffer) == 0) sync_column(editor);
+            break;
+        case KEY_RIGHT:
+            if (buffer_move_right(&editor->buffer) == 0) sync_column(editor);
+            break;
+        case KEY_UP:
+            buffer_move_up(&editor->buffer, editor->preferred_column);
+            break;
+        case KEY_DOWN:
+            buffer_move_down(&editor->buffer, editor->preferred_column);
+            break;
+
+        default:
+            if (ch >= 0 && ch <= 255) {
+                buffer_insert(&editor->buffer, ch);
+                sync_column(editor);
+            }
+            break;
     }
 }
