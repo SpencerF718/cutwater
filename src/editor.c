@@ -82,8 +82,11 @@ void process_insert_mode(Editor *editor, int ch) {
 
         default:
             if (ch >= 0 && ch <= 255) {
-                buffer_insert(&editor->buffer, ch);
-                sync_column(editor);
+                if (buffer_insert(&editor->buffer, ch) == BUFFER_SUCCESS) {
+                    sync_column(editor);
+                } else {
+                    beep();
+                }
             }
             break;
     }
