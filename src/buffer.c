@@ -310,6 +310,8 @@ BufferStatus buffer_free(EditorBuffer *eb) {
 
     eb->data = NULL;
     eb->capacity = 0;
+    eb->gap_start = 0;
+    eb->gap_end = 0;
 
     return BUFFER_SUCCESS;
 }
