@@ -34,7 +34,7 @@ void process_normal_mode(Editor *editor, int ch) {
             if (editor->buffer.gap_start > 0 && editor->buffer.data[editor->buffer.gap_start - 1] != '\n') {
                 buffer_move_left(&editor->buffer);
             }
-            sync_column(editor);
+            editor->preferred_column = (size_t) - 1;
             break;
         case 'w':
             if (buffer_move_next_word(&editor->buffer) == 0) sync_column(editor);
