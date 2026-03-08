@@ -1,33 +1,33 @@
-cmake_minimum_required(VERSION 3.16)
-project(cutwater C)
+cmake_minimum_required(VERSION 3.10)
 
-set(CMAKE_C_STANDARD 11)
+project(Cutwater C)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Find GTK4
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GTK4 REQUIRED gtk4)
+add_compile_options(-Wall -Wextra -Wpedantic)
 
-# Include headers
-include_directories(
-    ${GTK4_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/include
-)
+set(CURSES_NEED_WIDE TRUE)
+find_package(Curses REQUIRED)
 
-link_directories(${GTK4_LIBRARY_DIRS})
-add_definitions(${GTK4_CFLAGS_OTHER})
-
-# Source files
 set(SOURCES
-    src/gui/main.c
-    src/gui/cutwater.c
-    src/file_io/file_io.c
-    src/vim/vim.c
+    src/main.c
+    src/buffer.c
+    src/tui.c
+    src/editor.c
 )
 
-# Create executable
+set(TEST_SOURCES
+    tests/test_buffer.c
+    src/buffer.c
+)
+
 add_executable(cutwater ${SOURCES})
+add_executable(run_tests ${TEST_SOURCES})
 
-# Link GTK4 libraries
-target_link_libraries(cutwater ${GTK4_LIBRARIES})
+target_include_directories(cutwater PRIVATE include ${CURSES_INCLUDE_DIRS})
+target_include_directories(run_tests PRIVATE include)
 
+target_link_libraries(cutwater ${CURSES_LIBRARIES})
