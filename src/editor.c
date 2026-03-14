@@ -39,6 +39,9 @@ void process_normal_mode(Editor *editor, int ch) {
         case 'w':
             if (buffer_move_next_word(&editor->buffer) == 0) sync_column(editor);
             break;
+        case 'b':
+            if (buffer_move_prev_word(&editor->buffer) == 0) sync_column(editor);
+            break;
 
         case 'j':
         case KEY_DOWN:

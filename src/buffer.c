@@ -271,6 +271,34 @@ BufferStatus buffer_move_line_end(EditorBuffer *eb) {
     return buffer_move_gap(eb, target_position);
 }
 
+BufferStatus buffer_move_prev_word(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return BUFFER_ERR_INVALID_ARGUMENT;
+    }
+
+    if (eb->gap_start == 0) {
+        return BUFFER_SUCCESS;
+    }
+
+    size_t target_position = eb->gap_start - 1;
+
+    while (target_position > 0 && buffer_is_space(eb->data[target_position])) {
+        target_position--;
+    }
+
+    if (buffer_is_keyword(eb->data[target_position])) {
+        while (target_position > 0 && buffer_is_keyword(eb->data[target_position - 1])) {
+            target_position--;
+        }
+    } else if (buffer_is_punctuation(eb->data[target_position])) {
+        while (target_position > 0 && buffer_is_punctuation(eb->data[target_position - 1])) {
+            target_position--;
+        }
+    }
+
+    return buffer_move_gap(eb, target_position);
+}
+
 BufferStatus buffer_move_next_word(EditorBuffer *eb) {
     if (eb == NULL) {
         return BUFFER_ERR_INVALID_ARGUMENT;
