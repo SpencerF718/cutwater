@@ -298,6 +298,49 @@ void test_buffer_move_line_start(void) {
     printf("PASSED: buffer_move_line_start\n");
 }
 
+void test_buffer_move_line_first_non_blank(void) {
+    printf("TESTING: buffer_move_line_first_non_blank\n");
+
+    EditorBuffer eb;
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    BufferStatus result = buffer_move_line_first_non_blank(&eb);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 0);
+
+    buffer_free(&eb);
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    buffer_insert(&eb, TEST_CHAR_1);
+    buffer_insert(&eb, TEST_CHAR_2);
+    buffer_insert(&eb, TEST_CHAR_3);
+    buffer_insert(&eb, '\n');
+    buffer_insert(&eb, ' ');
+    buffer_insert(&eb, ' ');
+    buffer_insert(&eb, TEST_CHAR_4);
+    buffer_insert(&eb, TEST_CHAR_5);
+    buffer_insert(&eb, TEST_CHAR_6);
+
+    result = buffer_move_line_first_non_blank(&eb);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 6);
+    assert(eb.data[eb.gap_end] == TEST_CHAR_4);
+
+    buffer_free(&eb);
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    buffer_insert(&eb, ' ');
+    buffer_insert(&eb, ' ');
+
+    result = buffer_move_line_first_non_blank(&eb);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 0);
+    assert(eb.data[eb.gap_end] == ' ');
+
+    buffer_free(&eb);
+    printf("PASSED: buffer_move_line_first_non_blank\n");
+}
+
 void test_buffer_move_line_end(void) {
     printf("TESTING: buffer_move_line_end\n");
 
@@ -425,6 +468,60 @@ void test_buffer_move_prev_word(void) {
     printf("PASSED: buffer_move_prev_word\n");
 }
 
+void test_buffer_move_word_end(void) {
+    printf("TESTING: buffer_move_word_end\n");
+
+    EditorBuffer eb;
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    BufferStatus result = buffer_move_word_end(&eb);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 0);
+
+    buffer_free(&eb);
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    buffer_insert(&eb, TEST_CHAR_1);
+    buffer_insert(&eb, TEST_CHAR_2);
+    buffer_insert(&eb, TEST_CHAR_3);
+    buffer_insert(&eb, ' ');
+    buffer_insert(&eb, ' ');
+    buffer_insert(&eb, TEST_CHAR_4);
+    buffer_insert(&eb, TEST_CHAR_5);
+    buffer_insert(&eb, TEST_CHAR_6);
+
+    while (buffer_move_left(&eb) == BUFFER_SUCCESS);
+
+    result = buffer_move_word_end(&eb);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 2);
+    assert(eb.data[eb.gap_end] == TEST_CHAR_3);
+
+    result = buffer_move_word_end(&eb);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 7);
+    assert(eb.data[eb.gap_end] == TEST_CHAR_6);
+
+    buffer_free(&eb);
+    buffer_init(&eb, INITIAL_CAPACITY);
+
+    buffer_insert(&eb, '+');
+    buffer_insert(&eb, '+');
+    buffer_insert(&eb, '+');
+    buffer_insert(&eb, ' ');
+    buffer_insert(&eb, TEST_CHAR_1);
+
+    while (buffer_move_left(&eb) == BUFFER_SUCCESS);
+
+    result = buffer_move_word_end(&eb);
+    assert(result == BUFFER_SUCCESS);
+    assert(eb.gap_start == 2);
+    assert(eb.data[eb.gap_end] == '+');
+
+    buffer_free(&eb);
+    printf("PASSED: buffer_move_word_end\n");
+}
+
 int main(void) {
     test_buffer_init();
     test_buffer_grow();
@@ -436,9 +533,11 @@ int main(void) {
     test_buffer_move_up();
     test_buffer_move_down();
     test_buffer_move_line_start();
+    test_buffer_move_line_first_non_blank();
     test_buffer_move_line_end();
     test_buffer_move_next_word();
     test_buffer_move_prev_word();
+    test_buffer_move_word_end();
 
     printf("--- ALL TESTS PASSED ---\n");
 

@@ -31,9 +31,11 @@ BufferStatus buffer_move_right(EditorBuffer *eb);
 BufferStatus buffer_move_up(EditorBuffer *eb, size_t preferred_column);
 BufferStatus buffer_move_down(EditorBuffer *eb, size_t preferred_column);
 BufferStatus buffer_move_line_start(EditorBuffer *eb);
+BufferStatus buffer_move_line_first_non_blank(EditorBuffer *eb);
 BufferStatus buffer_move_line_end(EditorBuffer *eb);
 BufferStatus buffer_move_prev_word(EditorBuffer *eb);
 BufferStatus buffer_move_next_word(EditorBuffer *eb);
+BufferStatus buffer_move_word_end(EditorBuffer *eb);
 BufferStatus buffer_free(EditorBuffer *eb);
 
 #endif

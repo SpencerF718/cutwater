@@ -29,12 +29,19 @@ void process_normal_mode(Editor *editor, int ch) {
             buffer_move_line_start(&editor->buffer);
             sync_column(editor);
             break;
+        case '^':
+            buffer_move_line_first_non_blank(&editor->buffer);
+            sync_column(editor);
+            break;
         case '$':
             buffer_move_line_end(&editor->buffer);
             if (editor->buffer.gap_start > 0 && editor->buffer.data[editor->buffer.gap_start - 1] != '\n') {
                 buffer_move_left(&editor->buffer);
             }
             editor->preferred_column = (size_t) - 1;
+            break;
+        case 'e':
+            if (buffer_move_word_end(&editor->buffer) == 0) sync_column(editor);
             break;
         case 'w':
             if (buffer_move_next_word(&editor->buffer) == 0) sync_column(editor);

@@ -10,6 +10,7 @@
 static BufferStatus buffer_grow(EditorBuffer *eb);
 static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position);
 static int buffer_is_keyword(char c);
+static int buffer_is_blank(char c);
 static int buffer_is_space(char c);
 static int buffer_is_punctuation(char c);
 
@@ -83,6 +84,10 @@ static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position) {
 
 static int buffer_is_keyword(char c) {
     return isalnum((unsigned char)c) || c == '_';
+}
+
+static int buffer_is_blank(char c) {
+    return c == ' ' || c == '\t';
 }
 
 static int buffer_is_space(char c) {
@@ -257,6 +262,29 @@ BufferStatus buffer_move_line_start(EditorBuffer *eb) {
     return buffer_move_gap(eb, target_position);
 }
 
+BufferStatus buffer_move_line_first_non_blank(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return BUFFER_ERR_INVALID_ARGUMENT;
+    }
+
+    BufferStatus line_start_result = buffer_move_line_start(eb);
+    if (line_start_result != BUFFER_SUCCESS) {
+        return line_start_result;
+    }
+
+    size_t target_position = eb->gap_end;
+
+    while (target_position < eb->capacity && buffer_is_blank(eb->data[target_position])) {
+        target_position++;
+    }
+
+    if (target_position >= eb->capacity || eb->data[target_position] == '\n') {
+        return BUFFER_SUCCESS;
+    }
+
+    return buffer_move_gap(eb, target_position);
+}
+
 BufferStatus buffer_move_line_end(EditorBuffer *eb) {
     if (eb == NULL) {
         return BUFFER_ERR_INVALID_ARGUMENT;
@@ -327,6 +355,55 @@ BufferStatus buffer_move_next_word(EditorBuffer *eb) {
     }
 
     return buffer_move_gap(eb, target_position);
+}
+
+BufferStatus buffer_move_word_end(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return BUFFER_ERR_INVALID_ARGUMENT;
+    }
+
+    size_t target_position = eb->gap_end;
+
+    if (target_position < eb->capacity) {
+        char current_char = eb->data[target_position];
+
+        if (buffer_is_keyword(current_char) &&
+            (target_position + 1 >= eb->capacity || !buffer_is_keyword(eb->data[target_position + 1]))) {
+            target_position++;
+        } else if (buffer_is_punctuation(current_char) &&
+            (target_position + 1 >= eb->capacity || !buffer_is_punctuation(eb->data[target_position + 1]))) {
+            target_position++;
+        }
+    }
+
+    while (target_position < eb->capacity && buffer_is_space(eb->data[target_position])) {
+        target_position++;
+    }
+
+    if (target_position >= eb->capacity) {
+        return BUFFER_SUCCESS;
+    }
+
+    if (buffer_is_keyword(eb->data[target_position])) {
+        while (target_position < eb->capacity && buffer_is_keyword(eb->data[target_position])) {
+            target_position++;
+        }
+    } else if (buffer_is_punctuation(eb->data[target_position])) {
+        while (target_position < eb->capacity && buffer_is_punctuation(eb->data[target_position])) {
+            target_position++;
+        }
+    }
+
+    BufferStatus move_gap_result = buffer_move_gap(eb, target_position);
+    if (move_gap_result != BUFFER_SUCCESS) {
+        return move_gap_result;
+    }
+
+    if (eb->gap_start > 0 && eb->data[eb->gap_start - 1] != '\n') {
+        return buffer_move_left(eb);
+    }
+
+    return BUFFER_SUCCESS;
 }
 
 BufferStatus buffer_free(EditorBuffer *eb) {
