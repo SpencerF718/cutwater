@@ -6,7 +6,7 @@
 #include "editor.h"
 
 #define INITIAL_CAPACITY 10
-#define ESCAPE_DELAY_TIME 20
+#define ESCAPE_DELAY_TIME 5 
 
 int main (void) {
     setlocale(LC_ALL, "");
