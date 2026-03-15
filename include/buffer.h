@@ -25,7 +25,7 @@ typedef struct EditorBuffer {
 BufferStatus buffer_init(EditorBuffer *eb, size_t initial_capacity);
 BufferStatus buffer_insert(EditorBuffer *eb, char c);
 BufferStatus buffer_delete(EditorBuffer *eb);
-size_t buffer_get_column(EditorBuffer *eb);
+size_t buffer_get_column(const EditorBuffer *eb);
 BufferStatus buffer_move_left(EditorBuffer *eb);
 BufferStatus buffer_move_right(EditorBuffer *eb);
 BufferStatus buffer_move_up(EditorBuffer *eb, size_t preferred_column);

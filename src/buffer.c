@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <stddef.h>
 #include <string.h>
 #include <ctype.h>
@@ -7,12 +6,22 @@
 
 #define MIN_CAPACITY 1024
 
+typedef enum BufferCharClass {
+    BUFFER_CHAR_SPACE,
+    BUFFER_CHAR_KEYWORD,
+    BUFFER_CHAR_PUNCTUATION
+} BufferCharClass;
+
 static BufferStatus buffer_grow(EditorBuffer *eb);
 static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position);
+static size_t buffer_find_line_start_before(const EditorBuffer *eb, size_t position);
+static size_t buffer_find_line_end_after(const EditorBuffer *eb, size_t position);
+static BufferCharClass buffer_classify_char(char c);
 static int buffer_is_keyword(char c);
 static int buffer_is_blank(char c);
 static int buffer_is_space(char c);
-static int buffer_is_punctuation(char c);
+static size_t buffer_find_run_start(const EditorBuffer *eb, size_t position, BufferCharClass class);
+static size_t buffer_advance_run(const EditorBuffer *eb, size_t position, BufferCharClass class);
 
 BufferStatus buffer_init(EditorBuffer *eb, size_t initial_capacity) {
     if (eb == NULL) {
@@ -82,6 +91,22 @@ static BufferStatus buffer_move_gap(EditorBuffer *eb, size_t target_position) {
     return BUFFER_SUCCESS;
 }
 
+static size_t buffer_find_line_start_before(const EditorBuffer *eb, size_t position) {
+    while (position > 0 && eb->data[position - 1] != '\n') {
+        position--;
+    }
+
+    return position;
+}
+
+static size_t buffer_find_line_end_after(const EditorBuffer *eb, size_t position) {
+    while (position < eb->capacity && eb->data[position] != '\n') {
+        position++;
+    }
+
+    return position;
+}
+
 static int buffer_is_keyword(char c) {
     return isalnum((unsigned char)c) || c == '_';
 }
@@ -94,8 +119,32 @@ static int buffer_is_space(char c) {
     return isspace((unsigned char)c);
 }
 
-static int buffer_is_punctuation(char c) {
-    return !buffer_is_keyword(c) && !buffer_is_space(c);
+static BufferCharClass buffer_classify_char(char c) {
+    if (buffer_is_space(c)) {
+        return BUFFER_CHAR_SPACE;
+    }
+
+    if (buffer_is_keyword(c)) {
+        return BUFFER_CHAR_KEYWORD;
+    }
+
+    return BUFFER_CHAR_PUNCTUATION;
+}
+
+static size_t buffer_find_run_start(const EditorBuffer *eb, size_t position, BufferCharClass class) {
+    while (position > 0 && buffer_classify_char(eb->data[position - 1]) == class) {
+        position--;
+    }
+
+    return position;
+}
+
+static size_t buffer_advance_run(const EditorBuffer *eb, size_t position, BufferCharClass class) {
+    while (position < eb->capacity && buffer_classify_char(eb->data[position]) == class) {
+        position++;
+    }
+
+    return position;
 }
 
 BufferStatus buffer_insert(EditorBuffer *eb, char c) {
@@ -130,13 +179,8 @@ BufferStatus buffer_delete(EditorBuffer *eb) {
     return BUFFER_SUCCESS;
 }
 
-size_t buffer_get_column(EditorBuffer *eb) {
-    size_t current_line_start = eb->gap_start;
-
-    while (current_line_start > 0 && eb->data[current_line_start - 1] != '\n') {
-        current_line_start--;
-    }
-
+size_t buffer_get_column(const EditorBuffer *eb) {
+    size_t current_line_start = buffer_find_line_start_before(eb, eb->gap_start);
     return eb->gap_start - current_line_start;
 }
 
@@ -187,23 +231,14 @@ BufferStatus buffer_move_up(EditorBuffer *eb, size_t preferred_column) {
         return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
-    size_t current_line_start = eb->gap_start;
-
-    while (current_line_start > 0 && eb->data[current_line_start - 1] != '\n') {
-        current_line_start--;
-    }
+    size_t current_line_start = buffer_find_line_start_before(eb, eb->gap_start);
 
     if (current_line_start == 0) {
         return BUFFER_ERR_FIRST_LINE;
     }
 
     size_t previous_line_end = current_line_start - 1;
-    size_t previous_line_start = previous_line_end;
-
-    while (previous_line_start > 0 && eb->data[previous_line_start - 1] != '\n') {
-        previous_line_start--;
-    }
-
+    size_t previous_line_start = buffer_find_line_start_before(eb, previous_line_end);
     size_t previous_line_length = previous_line_end - previous_line_start;
     size_t clamped_column = preferred_column;
 
@@ -220,23 +255,14 @@ BufferStatus buffer_move_down(EditorBuffer *eb, size_t preferred_column) {
         return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
-    size_t scan_position = eb->gap_end;
+    size_t current_line_end = buffer_find_line_end_after(eb, eb->gap_end);
 
-    while (scan_position < eb->capacity && eb->data[scan_position] != '\n') {
-        scan_position++;
-    }
-
-    if (scan_position == eb->capacity) {
+    if (current_line_end == eb->capacity) {
         return BUFFER_ERR_LAST_LINE;
     }
 
-    size_t next_line_start = scan_position + 1;
-    size_t next_line_end = next_line_start;
-
-    while (next_line_end < eb->capacity && eb->data[next_line_end] != '\n') {
-        next_line_end++;
-    }
-
+    size_t next_line_start = current_line_end + 1;
+    size_t next_line_end = buffer_find_line_end_after(eb, next_line_start);
     size_t next_line_length = next_line_end - next_line_start;
     size_t clamped_column = preferred_column;
 
@@ -253,12 +279,7 @@ BufferStatus buffer_move_line_start(EditorBuffer *eb) {
         return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
-    size_t target_position = eb->gap_start;
-
-    while (target_position > 0 && eb->data[target_position - 1] != '\n') {
-        target_position--;
-    }
-
+    size_t target_position = buffer_find_line_start_before(eb, eb->gap_start);
     return buffer_move_gap(eb, target_position);
 }
 
@@ -290,12 +311,7 @@ BufferStatus buffer_move_line_end(EditorBuffer *eb) {
         return BUFFER_ERR_INVALID_ARGUMENT;
     }
 
-    size_t target_position = eb->gap_end;
-
-    while (target_position < eb->capacity && eb->data[target_position] != '\n') {
-        target_position++;
-    }
-
+    size_t target_position = buffer_find_line_end_after(eb, eb->gap_end);
     return buffer_move_gap(eb, target_position);
 }
 
@@ -314,14 +330,16 @@ BufferStatus buffer_move_prev_word(EditorBuffer *eb) {
         target_position--;
     }
 
-    if (buffer_is_keyword(eb->data[target_position])) {
-        while (target_position > 0 && buffer_is_keyword(eb->data[target_position - 1])) {
-            target_position--;
-        }
-    } else if (buffer_is_punctuation(eb->data[target_position])) {
-        while (target_position > 0 && buffer_is_punctuation(eb->data[target_position - 1])) {
-            target_position--;
-        }
+    switch (buffer_classify_char(eb->data[target_position])) {
+        case BUFFER_CHAR_KEYWORD:
+            target_position = buffer_find_run_start(eb, target_position, BUFFER_CHAR_KEYWORD);
+            break;
+        case BUFFER_CHAR_PUNCTUATION:
+            target_position = buffer_find_run_start(eb, target_position, BUFFER_CHAR_PUNCTUATION);
+            break;
+        case BUFFER_CHAR_SPACE:
+        default:
+            break;
     }
 
     return buffer_move_gap(eb, target_position);
@@ -338,16 +356,10 @@ BufferStatus buffer_move_next_word(EditorBuffer *eb) {
         return BUFFER_SUCCESS;
     }
 
-    char current_char = eb->data[target_position];
+    BufferCharClass current_class = buffer_classify_char(eb->data[target_position]);
 
-    if (buffer_is_keyword(current_char)) {
-        while (target_position < eb->capacity && buffer_is_keyword(eb->data[target_position])) {
-            target_position++;
-        }
-    } else if (buffer_is_punctuation(current_char)) {
-        while (target_position < eb->capacity && buffer_is_punctuation(eb->data[target_position])) {
-            target_position++;
-        }
+    if (current_class == BUFFER_CHAR_KEYWORD || current_class == BUFFER_CHAR_PUNCTUATION) {
+        target_position = buffer_advance_run(eb, target_position, current_class);
     }
 
     while (target_position < eb->capacity && buffer_is_space(eb->data[target_position])) {
@@ -365,13 +377,12 @@ BufferStatus buffer_move_word_end(EditorBuffer *eb) {
     size_t target_position = eb->gap_end;
 
     if (target_position < eb->capacity) {
-        char current_char = eb->data[target_position];
+        BufferCharClass current_class = buffer_classify_char(eb->data[target_position]);
+        int is_word_class = current_class == BUFFER_CHAR_KEYWORD || current_class == BUFFER_CHAR_PUNCTUATION;
+        int next_matches_class = target_position + 1 < eb->capacity &&
+            buffer_classify_char(eb->data[target_position + 1]) == current_class;
 
-        if (buffer_is_keyword(current_char) &&
-            (target_position + 1 >= eb->capacity || !buffer_is_keyword(eb->data[target_position + 1]))) {
-            target_position++;
-        } else if (buffer_is_punctuation(current_char) &&
-            (target_position + 1 >= eb->capacity || !buffer_is_punctuation(eb->data[target_position + 1]))) {
+        if (is_word_class && !next_matches_class) {
             target_position++;
         }
     }
@@ -384,14 +395,10 @@ BufferStatus buffer_move_word_end(EditorBuffer *eb) {
         return BUFFER_SUCCESS;
     }
 
-    if (buffer_is_keyword(eb->data[target_position])) {
-        while (target_position < eb->capacity && buffer_is_keyword(eb->data[target_position])) {
-            target_position++;
-        }
-    } else if (buffer_is_punctuation(eb->data[target_position])) {
-        while (target_position < eb->capacity && buffer_is_punctuation(eb->data[target_position])) {
-            target_position++;
-        }
+    BufferCharClass target_class = buffer_classify_char(eb->data[target_position]);
+
+    if (target_class == BUFFER_CHAR_KEYWORD || target_class == BUFFER_CHAR_PUNCTUATION) {
+        target_position = buffer_advance_run(eb, target_position, target_class);
     }
 
     BufferStatus move_gap_result = buffer_move_gap(eb, target_position);
