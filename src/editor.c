@@ -61,6 +61,13 @@ void process_insert_mode(Editor *editor, int ch) {
     switch (ch) {
         case ESCAPE_ASCII_CODE:
             editor->mode = MODE_NORMAL;
+
+            if (editor->buffer.gap_start > 0 && 
+                editor->buffer.data[editor->buffer.gap_start - 1] != '\n') {
+                buffer_move_left(&editor->buffer);
+            }
+
+            sync_column(editor);
             break;
 
         case KEY_BACKSPACE:
