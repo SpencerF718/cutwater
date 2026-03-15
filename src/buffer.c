@@ -37,7 +37,7 @@ static BufferStatus buffer_grow(EditorBuffer *eb) {
     }
 
     size_t new_capacity;
-    if (eb->capacity <= MIN_CAPACITY) {
+    if (eb->capacity < MIN_CAPACITY) {
         new_capacity = MIN_CAPACITY;
     } else {
         new_capacity = eb->capacity << 1;
