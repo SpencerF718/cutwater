@@ -413,6 +413,22 @@ BufferStatus buffer_move_word_end(EditorBuffer *eb) {
     return BUFFER_SUCCESS;
 }
 
+BufferStatus buffer_move_file_start(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return BUFFER_ERR_INVALID_ARGUMENT;
+    }
+
+    return buffer_move_gap(eb, 0);
+}
+
+BufferStatus buffer_move_file_end(EditorBuffer *eb) {
+    if (eb == NULL) {
+        return BUFFER_ERR_INVALID_ARGUMENT;
+    }
+
+    return buffer_move_gap(eb, eb->capacity);
+}
+
 BufferStatus buffer_free(EditorBuffer *eb) {
     if (eb == NULL) {
         return BUFFER_ERR_INVALID_ARGUMENT;

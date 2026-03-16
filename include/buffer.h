@@ -36,6 +36,8 @@ BufferStatus buffer_move_line_end(EditorBuffer *eb);
 BufferStatus buffer_move_prev_word(EditorBuffer *eb);
 BufferStatus buffer_move_next_word(EditorBuffer *eb);
 BufferStatus buffer_move_word_end(EditorBuffer *eb);
+BufferStatus buffer_move_file_start(EditorBuffer *eb);
+BufferStatus buffer_move_file_end(EditorBuffer *eb);
 BufferStatus buffer_free(EditorBuffer *eb);
 
 #endif
