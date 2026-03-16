@@ -8,7 +8,30 @@ static void sync_column(Editor *editor) {
     editor->preferred_column = buffer_get_column(&editor->buffer);
 }
 
+static void clear_motion_prefix(Editor *editor) {
+    editor->pending_motion_prefix = MOTION_PREFIX_NONE;
+}
+
+static void signal_invalid_command(void) {
+    if (stdscr != NULL) {
+        beep();
+    }
+}
+
 void process_normal_mode(Editor *editor, int ch) {
+    if (editor->pending_motion_prefix == MOTION_PREFIX_G) {
+        clear_motion_prefix(editor);
+
+        if (ch == 'g') {
+            buffer_move_file_start(&editor->buffer);
+            sync_column(editor);
+        } else {
+            signal_invalid_command();
+        }
+
+        return;
+    }
+
     switch (ch) {
         case 'q':
             editor->is_running = 0;
@@ -48,6 +71,13 @@ void process_normal_mode(Editor *editor, int ch) {
             break;
         case 'b':
             if (buffer_move_prev_word(&editor->buffer) == 0) sync_column(editor);
+            break;
+        case 'g':
+            editor->pending_motion_prefix = MOTION_PREFIX_G;
+            break;
+        case 'G':
+            buffer_move_file_end(&editor->buffer);
+            sync_column(editor);
             break;
 
         case 'j':

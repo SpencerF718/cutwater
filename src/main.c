@@ -19,6 +19,7 @@ int main (void) {
 
     editor.mode = MODE_NORMAL;
     editor.preferred_column = 0;
+    editor.pending_motion_prefix = MOTION_PREFIX_NONE;
 
     initscr();
     set_escdelay(ESCAPE_DELAY_TIME);

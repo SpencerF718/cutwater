@@ -24,10 +24,19 @@ set(TEST_SOURCES
     src/buffer.c
 )
 
+set(EDITOR_TEST_SOURCES
+    tests/test_editor.c
+    src/buffer.c
+    src/editor.c
+)
+
 add_executable(cutwater ${SOURCES})
 add_executable(run_tests ${TEST_SOURCES})
+add_executable(run_editor_tests ${EDITOR_TEST_SOURCES})
 
 target_include_directories(cutwater PRIVATE include ${CURSES_INCLUDE_DIRS})
 target_include_directories(run_tests PRIVATE include)
+target_include_directories(run_editor_tests PRIVATE include ${CURSES_INCLUDE_DIRS})
 
 target_link_libraries(cutwater ${CURSES_LIBRARIES})
+target_link_libraries(run_editor_tests ${CURSES_LIBRARIES})
