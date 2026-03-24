@@ -21,7 +21,8 @@ typedef struct Editor {
     EditorMotionPrefix pending_motion_prefix;
 } Editor;
 
-void process_normal_mode(Editor *editor, int ch);
-void process_insert_mode(Editor *editor, int ch);
+BufferStatus editor_init(Editor *editor, size_t initial_capacity);
+void editor_destroy(Editor *editor);
+void editor_handle_key(Editor *editor, int ch);
 
 #endif

@@ -14,20 +14,27 @@ find_package(Curses REQUIRED)
 
 set(SOURCES
     src/main.c
-    src/buffer.c
+    src/buffer_core.c
+    src/buffer_navigation.c
     src/tui.c
     src/editor.c
+    src/editor_mode_normal.c
+    src/editor_mode_insert.c
 )
 
 set(TEST_SOURCES
     tests/test_buffer.c
-    src/buffer.c
+    src/buffer_core.c
+    src/buffer_navigation.c
 )
 
 set(EDITOR_TEST_SOURCES
     tests/test_editor.c
-    src/buffer.c
+    src/buffer_core.c
+    src/buffer_navigation.c
     src/editor.c
+    src/editor_mode_normal.c
+    src/editor_mode_insert.c
 )
 
 add_executable(cutwater ${SOURCES})

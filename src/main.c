@@ -1,51 +1,35 @@
 #include <ncurses.h>
 #include <locale.h>
 #include <stdio.h>
-#include "tui.h"
-#include "buffer.h"
+
 #include "editor.h"
+#include "tui.h"
 
-#define INITIAL_CAPACITY 10
-#define ESCAPE_DELAY_TIME 5 
+#define INITIAL_BUFFER_CAPACITY 10
 
-int main (void) {
+int main(void) {
+    BufferStatus init_result;
     setlocale(LC_ALL, "");
 
     Editor editor;
-    if (buffer_init(&editor.buffer, INITIAL_CAPACITY) != 0) {
+    init_result = editor_init(&editor, INITIAL_BUFFER_CAPACITY);
+    if (init_result != BUFFER_SUCCESS) {
         fprintf(stderr, "Failed to initialize buffer\n");
         return 1;
     }
 
-    editor.mode = MODE_NORMAL;
-    editor.preferred_column = 0;
-    editor.pending_motion_prefix = MOTION_PREFIX_NONE;
-
-    initscr();
-    set_escdelay(ESCAPE_DELAY_TIME);
-    raw();
-    noecho();
-    keypad(stdscr, TRUE);
-
-    editor.is_running = 1;
+    tui_init();
 
     while (editor.is_running) {
-        clear();
-        render_buffer(&editor.buffer);
-        refresh();
-        int ch = getch();
+        int ch;
 
-        switch (editor.mode) {
-            case MODE_NORMAL:
-                process_normal_mode(&editor, ch);
-                break;
-            case MODE_INSERT:
-                process_insert_mode(&editor, ch);
-                break;
-        }
+        tui_render_editor(&editor);
+        ch = getch();
+        editor_handle_key(&editor, ch);
     }
 
-    buffer_free(&editor.buffer);
-    endwin();
+    editor_destroy(&editor);
+    tui_shutdown();
+
     return 0;
 }

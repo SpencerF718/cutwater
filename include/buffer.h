@@ -23,21 +23,21 @@ typedef struct EditorBuffer {
 } EditorBuffer;
 
 BufferStatus buffer_init(EditorBuffer *eb, size_t initial_capacity);
-BufferStatus buffer_insert(EditorBuffer *eb, char c);
-BufferStatus buffer_delete(EditorBuffer *eb);
-size_t buffer_get_column(const EditorBuffer *eb);
+BufferStatus buffer_insert_char(EditorBuffer *eb, char c);
+BufferStatus buffer_delete_before_cursor(EditorBuffer *eb);
+size_t buffer_get_cursor_column(const EditorBuffer *eb);
 BufferStatus buffer_move_left(EditorBuffer *eb);
 BufferStatus buffer_move_right(EditorBuffer *eb);
 BufferStatus buffer_move_up(EditorBuffer *eb, size_t preferred_column);
 BufferStatus buffer_move_down(EditorBuffer *eb, size_t preferred_column);
-BufferStatus buffer_move_line_start(EditorBuffer *eb);
-BufferStatus buffer_move_line_first_non_blank(EditorBuffer *eb);
-BufferStatus buffer_move_line_end(EditorBuffer *eb);
-BufferStatus buffer_move_prev_word(EditorBuffer *eb);
-BufferStatus buffer_move_next_word(EditorBuffer *eb);
-BufferStatus buffer_move_word_end(EditorBuffer *eb);
-BufferStatus buffer_move_file_start(EditorBuffer *eb);
-BufferStatus buffer_move_file_end(EditorBuffer *eb);
+BufferStatus buffer_move_to_line_start(EditorBuffer *eb);
+BufferStatus buffer_move_to_first_non_blank(EditorBuffer *eb);
+BufferStatus buffer_move_to_line_end(EditorBuffer *eb);
+BufferStatus buffer_move_to_previous_word(EditorBuffer *eb);
+BufferStatus buffer_move_to_next_word(EditorBuffer *eb);
+BufferStatus buffer_move_to_word_end(EditorBuffer *eb);
+BufferStatus buffer_move_to_file_start(EditorBuffer *eb);
+BufferStatus buffer_move_to_file_end(EditorBuffer *eb);
 BufferStatus buffer_free(EditorBuffer *eb);
 
 #endif

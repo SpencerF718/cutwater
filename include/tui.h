@@ -1,8 +1,10 @@
 #ifndef TUI_H
 #define TUI_H
 
-#include "buffer.h"
+#include "editor.h"
 
-void render_buffer(EditorBuffer *eb);
+void tui_init(void);
+void tui_shutdown(void);
+void tui_render_editor(const Editor *editor);
 
 #endif

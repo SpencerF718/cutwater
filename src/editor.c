@@ -1,140 +1,67 @@
-#include "editor.h"
-#include "buffer.h"
 #include <ncurses.h>
 
-#define ESCAPE_ASCII_CODE 27
+#include "editor_internal.h"
 
-static void sync_column(Editor *editor) {
-    editor->preferred_column = buffer_get_column(&editor->buffer);
+BufferStatus editor_init(Editor *editor, size_t initial_capacity) {
+    BufferStatus init_result;
+
+    if (editor == NULL) {
+        return BUFFER_ERR_INVALID_ARGUMENT;
+    }
+
+    init_result = buffer_init(&editor->buffer, initial_capacity);
+    if (init_result != BUFFER_SUCCESS) {
+        return init_result;
+    }
+
+    editor->mode = MODE_NORMAL;
+    editor->is_running = 1;
+    editor->preferred_column = 0;
+    editor->pending_motion_prefix = MOTION_PREFIX_NONE;
+
+    return BUFFER_SUCCESS;
 }
 
-static void clear_motion_prefix(Editor *editor) {
+void editor_destroy(Editor *editor) {
+    if (editor == NULL) {
+        return;
+    }
+
+    (void)buffer_free(&editor->buffer);
+}
+
+void editor_handle_key(Editor *editor, int ch) {
+    if (editor == NULL) {
+        return;
+    }
+
+    switch (editor->mode) {
+        case MODE_NORMAL:
+            editor_handle_normal_mode_key(editor, ch);
+            break;
+        case MODE_INSERT:
+            editor_handle_insert_mode_key(editor, ch);
+            break;
+    }
+}
+
+void editor_sync_preferred_column(Editor *editor) {
+    editor->preferred_column = buffer_get_cursor_column(&editor->buffer);
+}
+
+void editor_clear_pending_motion_prefix(Editor *editor) {
     editor->pending_motion_prefix = MOTION_PREFIX_NONE;
 }
 
-static void signal_invalid_command(void) {
+void editor_signal_invalid_command(void) {
     if (stdscr != NULL) {
         beep();
     }
 }
 
-void process_normal_mode(Editor *editor, int ch) {
-    if (editor->pending_motion_prefix == MOTION_PREFIX_G) {
-        clear_motion_prefix(editor);
-
-        if (ch == 'g') {
-            buffer_move_file_start(&editor->buffer);
-            sync_column(editor);
-        } else {
-            signal_invalid_command();
-        }
-
-        return;
-    }
-
-    switch (ch) {
-        case 'q':
-            editor->is_running = 0;
-            break;
-        case 'i':
-            editor->mode = MODE_INSERT;
-            break;
-
-        case 'h':
-        case KEY_LEFT:
-            if (buffer_move_left(&editor->buffer) == 0) sync_column(editor);
-            break;
-        case 'l':
-        case KEY_RIGHT:
-            if (buffer_move_right(&editor->buffer) == 0) sync_column(editor);
-            break;
-        case '0':
-            buffer_move_line_start(&editor->buffer);
-            sync_column(editor);
-            break;
-        case '^':
-            buffer_move_line_first_non_blank(&editor->buffer);
-            sync_column(editor);
-            break;
-        case '$':
-            buffer_move_line_end(&editor->buffer);
-            if (editor->buffer.gap_start > 0 && editor->buffer.data[editor->buffer.gap_start - 1] != '\n') {
-                buffer_move_left(&editor->buffer);
-            }
-            editor->preferred_column = (size_t) - 1;
-            break;
-        case 'e':
-            if (buffer_move_word_end(&editor->buffer) == 0) sync_column(editor);
-            break;
-        case 'w':
-            if (buffer_move_next_word(&editor->buffer) == 0) sync_column(editor);
-            break;
-        case 'b':
-            if (buffer_move_prev_word(&editor->buffer) == 0) sync_column(editor);
-            break;
-        case 'g':
-            editor->pending_motion_prefix = MOTION_PREFIX_G;
-            break;
-        case 'G':
-            buffer_move_file_end(&editor->buffer);
-            sync_column(editor);
-            break;
-
-        case 'j':
-        case KEY_DOWN:
-            buffer_move_down(&editor->buffer, editor->preferred_column);
-            break;
-        case 'k':
-        case KEY_UP:
-            buffer_move_up(&editor->buffer, editor->preferred_column);
-            break;
-
-        default:
-            break;
-    }
-}
-
-void process_insert_mode(Editor *editor, int ch) {
-    switch (ch) {
-        case ESCAPE_ASCII_CODE:
-            editor->mode = MODE_NORMAL;
-
-            if (editor->buffer.gap_start > 0 && 
-                editor->buffer.data[editor->buffer.gap_start - 1] != '\n') {
-                buffer_move_left(&editor->buffer);
-            }
-
-            sync_column(editor);
-            break;
-
-        case KEY_BACKSPACE:
-        case 127:
-        case '\b':
-            buffer_delete(&editor->buffer);
-            sync_column(editor);
-            break;
-
-        case KEY_LEFT:
-            if (buffer_move_left(&editor->buffer) == 0) sync_column(editor);
-            break;
-        case KEY_RIGHT:
-            if (buffer_move_right(&editor->buffer) == 0) sync_column(editor);
-            break;
-        case KEY_UP:
-            buffer_move_up(&editor->buffer, editor->preferred_column);
-            break;
-        case KEY_DOWN:
-            buffer_move_down(&editor->buffer, editor->preferred_column);
-            break;
-
-        default:
-            if (ch >= 0 && ch <= 255) {
-                if (buffer_insert(&editor->buffer, ch) == BUFFER_SUCCESS) {
-                    sync_column(editor);
-                } else {
-                    beep();
-                }
-            }
-            break;
+void editor_move_cursor_left_if_not_on_newline(Editor *editor) {
+    if (editor->buffer.gap_start > 0 &&
+        editor->buffer.data[editor->buffer.gap_start - 1] != '\n') {
+        (void)buffer_move_left(&editor->buffer);
     }
 }
