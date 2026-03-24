@@ -1,6 +1,6 @@
 #include <ncurses.h>
 
-#include "editor_internal.h"
+#include "internal/editor_internal.h"
 
 BufferStatus editor_init(Editor *editor, size_t initial_capacity) {
     BufferStatus init_result;

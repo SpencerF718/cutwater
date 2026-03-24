@@ -1,6 +1,6 @@
 #include <ncurses.h>
 
-#include "editor_internal.h"
+#include "internal/editor_internal.h"
 
 #define EDITOR_ESCAPE_ASCII_CODE 27
 

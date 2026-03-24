@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "buffer_internal.h"
+#include "internal/buffer_internal.h"
 
 #define MIN_BUFFER_CAPACITY 1024
 

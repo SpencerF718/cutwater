@@ -1,6 +1,6 @@
 #include <ctype.h>
 
-#include "buffer_internal.h"
+#include "internal/buffer_internal.h"
 
 typedef enum BufferCharClass {
     BUFFER_CHAR_SPACE,

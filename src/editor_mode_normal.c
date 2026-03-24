@@ -2,7 +2,7 @@
 
 #include <ncurses.h>
 
-#include "editor_internal.h"
+#include "internal/editor_internal.h"
 
 static void editor_handle_pending_g_prefix(Editor *editor, int ch) {
     editor_clear_pending_motion_prefix(editor);
