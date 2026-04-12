@@ -4,7 +4,11 @@
 #include "editor.h"
 
 void editor_sync_preferred_column(Editor *editor);
+void editor_clear_pending_count(Editor *editor);
+size_t editor_get_effective_count(const Editor *editor);
+void editor_append_count_digit(Editor *editor, int digit);
 void editor_clear_pending_motion_prefix(Editor *editor);
+void editor_clear_pending_command(Editor *editor);
 void editor_signal_invalid_command(void);
 void editor_move_cursor_left_if_not_on_newline(Editor *editor);
 void editor_handle_normal_mode_key(Editor *editor, int ch);

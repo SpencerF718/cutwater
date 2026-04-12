@@ -19,6 +19,7 @@ typedef struct Editor {
     int is_running;
     size_t preferred_column;
     EditorMotionPrefix pending_motion_prefix;
+    size_t pending_count;
 } Editor;
 
 BufferStatus editor_init(Editor *editor, size_t initial_capacity);

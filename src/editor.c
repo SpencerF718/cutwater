@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <stdint.h>
 
 #include "internal/editor_internal.h"
 
@@ -18,6 +19,7 @@ BufferStatus editor_init(Editor *editor, size_t initial_capacity) {
     editor->is_running = 1;
     editor->preferred_column = 0;
     editor->pending_motion_prefix = MOTION_PREFIX_NONE;
+    editor->pending_count = 0;
 
     return BUFFER_SUCCESS;
 }
@@ -49,8 +51,46 @@ void editor_sync_preferred_column(Editor *editor) {
     editor->preferred_column = buffer_get_cursor_column(&editor->buffer);
 }
 
+void editor_clear_pending_count(Editor *editor) {
+    if (editor == NULL) {
+        return;
+    }
+
+    editor->pending_count = 0;
+}
+
+size_t editor_get_effective_count(const Editor *editor) {
+    if (editor == NULL || editor->pending_count == 0) {
+        return 1;
+    }
+
+    return editor->pending_count;
+}
+
+void editor_append_count_digit(Editor *editor, int digit) {
+    if (editor == NULL || digit < 0 || digit > 9) {
+        return;
+    }
+
+    if (editor->pending_count > (SIZE_MAX - (size_t)digit) / 10) {
+        editor->pending_count = SIZE_MAX;
+        return;
+    }
+
+    editor->pending_count = editor->pending_count * 10 + (size_t)digit;
+}
+
 void editor_clear_pending_motion_prefix(Editor *editor) {
     editor->pending_motion_prefix = MOTION_PREFIX_NONE;
+}
+
+void editor_clear_pending_command(Editor *editor) {
+    if (editor == NULL) {
+        return;
+    }
+
+    editor_clear_pending_motion_prefix(editor);
+    editor_clear_pending_count(editor);
 }
 
 void editor_signal_invalid_command(void) {
